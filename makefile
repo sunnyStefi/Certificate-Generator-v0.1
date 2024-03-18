@@ -18,8 +18,32 @@ build:; forge build
 SEPOLIA_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
 
 #@ prevents to print the command 
-deploy:
-	@forge script script/PinkSpace.s.sol:PinkSpaceScript $(SEPOLIA_ARGS) 
+# mint:
+# 	@forge script script/Interaction.s.sol:MintBasicNFT $(SEPOLIA_ARGS)
 
-mint:
-	@forge script script/Interaction.s.sol:MintBasicNFT $(SEPOLIA_ARGS)
+push:
+	git add .
+	git commit -m "interactions"
+	push orgin main
+deploy: 
+	sudo rm -rf broadcast && sudo rm -rf cache
+	@forge script script/Deployment.s.sol:Deployment $(SEPOLIA_ARGS)
+
+courses:
+	forge build --skip script --skip test --skip progress
+	
+createCourses:
+	forge script script/Interaction.s.sol:createCourses $(SEPOLIA_ARGS) 
+
+setUpEvaluator:
+	forge script script/Interaction.s.sol:setUpEvaluator $(SEPOLIA_ARGS)
+
+buyCourse:
+	forge script script/Interaction.s.sol:buyCourse $(SEPOLIA_ARGS)
+
+transferNFT:
+	forge script script/Interaction.s.sol:transferNFT $(SEPOLIA_ARGS)
+
+evaluate:
+	forge script script/Interaction.s.sol:transferNFT $(SEPOLIA_ARGS)
+

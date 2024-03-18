@@ -2,11 +2,11 @@
 // pragma solidity ^0.8.13;
 
 // import {Test, console} from "forge-std/Test.sol";
-// import {Dispatcher} from "../../src/Dispatcher.sol";
-// import {DispatcherDeploy} from "../../script/DispatcherDeploy.s.sol";
+// import {Certificates} from "../../src/Certificates.sol";
+// import {Deployment} from "../../script/Deployment.s.sol";
 
-// contract CounterTest is Test {
-//     DispatcherDeploy deployer;
+// contract DispatcherTest is Test {
+//     Deployment deployer;
 //     Dispatcher public Dispatcher;
 //     uint256 s_test_value = 0.01 ether;
 //     address public ALICE = makeAddr("alice");
