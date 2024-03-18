@@ -24,7 +24,8 @@ SEPOLIA_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broa
 push:
 	git add .
 	git commit -m "interactions"
-	push orgin main
+	git push orgin main
+
 deploy: 
 	sudo rm -rf broadcast && sudo rm -rf cache
 	@forge script script/Deployment.s.sol:Deployment $(SEPOLIA_ARGS)
