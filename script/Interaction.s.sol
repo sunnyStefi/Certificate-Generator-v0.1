@@ -7,35 +7,41 @@ import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol";
 import {Course} from "../src/Course.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
-contract createCourses is Script {
+contract CreateCourses is Script {
     uint256 VALUE_001 = 0.01 ether;
     uint256 deployerKey;
+    uint256 aliceKey;
+    uint256[] ids = new uint256[](2);
+    uint256[] values = new uint256[](2);
+    string[] testUri = new string[](2);
+    uint256[] fees = new uint256[](2);
 
     function run() external {
+        (, aliceKey) = makeAddrAndKey("alice");
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
-
+        setUpCreate();
         if (block.chainid == 11155111) {
             deployerKey = vm.envUint("PRIVATE_KEY");
         }
         vm.startBroadcast(deployerKey);
-        uint256[] memory ids = new uint256[](2);
-        ids[0] = 0; //basic math course
-        ids[1] = 1; //advanced math course
-        uint256[] memory values = new uint256[](2);
-        values[0] = 2;
-        values[1] = 5;
-        string[] memory testUri = new string[](2);
-        testUri[0] = "https://ipfs.io/ipfs/Qmd4Z8G6vh4H8Cu4UXT78Vr8pq8WN92SScBntbRe6npvYG/0.json";
-        testUri[1] = "https://ipfs.io/ipfs/Qmd4Z8G6vh4H8Cu4UXT78Vr8pq8WN92SScBntbRe6npvYG/1.json";
-        uint256[] memory fees = new uint256[](2);
-        fees[0] = VALUE_001;
-        fees[1] = VALUE_001;
         Course(mostRecentlyDeployed).createCourses(ids, values, "", testUri, fees);
         vm.stopBroadcast();
     }
+
+    function setUpCreate() public returns (uint256[] memory, uint256[] memory, string[] memory, uint256[] memory) {
+        ids[0] = 0; //basic math course
+        ids[1] = 1; //advanced math course
+        values[0] = 7;
+        values[1] = 1;
+        testUri[0] = "https://ipfs.io/ipfs/Qmd4Z8G6vh4H8Cu4UXT78Vr8pq8WN92SScBntbRe6npvYG/0.json";
+        testUri[1] = "https://ipfs.io/ipfs/Qmd4Z8G6vh4H8Cu4UXT78Vr8pq8WN92SScBntbRe6npvYG/1.json";
+        fees[0] = VALUE_001;
+        fees[1] = VALUE_001;
+        return (ids, values, testUri, fees);
+    }
 }
 
-contract setUpEvaluator is Script {
+contract SetUpEvaluator is Script {
     uint256 deployerKey;
 
     function run() external {
@@ -45,13 +51,13 @@ contract setUpEvaluator is Script {
             deployerKey = vm.envUint("PRIVATE_KEY");
         }
         vm.startBroadcast(deployerKey);
-        address BOB = address(bytes20(bytes("0xf015f6a767167b3f21e03D93b475c26D32DCc399")));
-        Course(mostRecentlyDeployed).setUpEvaluator(BOB);
+        address EVE = address(0x34Fc21D79de671e5e05Ad7156A663Af8C3702E17);
+        Course(mostRecentlyDeployed).setUpEvaluator(EVE);
         vm.stopBroadcast();
     }
 }
 
-contract buyCourse is Script {
+contract BuyCourses is Script {
     uint256 VALUE_001 = 0.01 ether;
     uint256 deployerKey;
 
@@ -59,10 +65,14 @@ contract buyCourse is Script {
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
 
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY_CARL");
+            buyCourse(vm.envUint("PRIVATE_KEY_BOB"), mostRecentlyDeployed);
+            buyCourse(vm.envUint("PRIVATE_KEY_CARL"), mostRecentlyDeployed);
+            buyCourse(vm.envUint("PRIVATE_KEY_DAVID"), mostRecentlyDeployed);
         }
-        vm.startBroadcast(deployerKey);
-        address CARL = address(0x0B65fbabA12AACFD7c2CE17f9cbcCf82bc7a4236);
+    }
+
+    function buyCourse(uint256 broadcasterKey, address mostRecentlyDeployed) private{
+        vm.startBroadcast(broadcasterKey);
         Course(mostRecentlyDeployed).buyCourse{value: VALUE_001}(0);
         vm.stopBroadcast();
     }
@@ -85,4 +95,36 @@ contract transferNFT is Script {
     }
 }
 
-// evaluate carl and make certificates
+contract evaluate is Script {
+    uint256 VALUE_001 = 0.01 ether;
+    uint256 deployerKey;
+
+    function run() external {
+        address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
+
+        if (block.chainid == 11155111) {
+            deployerKey = vm.envUint("PRIVATE_KEY_BOB");
+        }
+        vm.startBroadcast(deployerKey);
+        address CARL = address(0x0B65fbabA12AACFD7c2CE17f9cbcCf82bc7a4236);
+        Course(mostRecentlyDeployed).evaluate(0, CARL, 7);
+        vm.stopBroadcast();
+    }
+}
+
+contract makeCertificate is Script {
+    uint256 VALUE_001 = 0.01 ether;
+    string newUri = "https://ipfs.io/ipfs/QmcbWTvWMBoRwvJdXUDjuaRXD5w6BKxTeUe3vNZ6Hm4zg6/0_success.json";
+    uint256 deployerKey;
+
+    function run() external {
+        address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
+
+        if (block.chainid == 11155111) {
+            deployerKey = vm.envUint("PRIVATE_KEY");
+        }
+        vm.startBroadcast(deployerKey);
+        Course(mostRecentlyDeployed).makeCertificates(0, newUri);
+        vm.stopBroadcast();
+    }
+}

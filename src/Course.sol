@@ -97,7 +97,6 @@ contract Course is ERC1155, AccessControl {
         uint256 numberOfCourses = values.length;
         s_coursesCounter += numberOfCourses;
         setCoursesData(ids, uris, fees);
-
         _mintBatch(_msgSender(), ids, values, data);
         //approve their transfer for later // can we costumise this? e.g they cannot move it around
         setApprovalForAll(_msgSender(), true);
@@ -182,6 +181,18 @@ contract Course is ERC1155, AccessControl {
         return valid_match;
     }
 
+    //Only Admin can approve whom is transferred to
+    function setApprovalForAll(address operator, bool approved) public override onlyRole(ADMIN) {
+        super.setApprovalForAll(operator, approved);
+    }
+
+    function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes memory data){
+        public
+        override
+        onlyRole(ADMIN){
+        super.safeTransferFrom(from, to, id, value, data);
+    }
+
     function makeCertificates(uint256 courseId, string memory certificateUri) public onlyRole(ADMIN) {
         //todo all evaluated = enrolled
         //Burns for the not promoted students
@@ -200,9 +211,6 @@ contract Course is ERC1155, AccessControl {
                 setCertificateUri(courseId, certificateUri);
             }
         }
-        //Convert uri to make certificates
-        // setCoursesUris([courseId], [successfullUri]);
-        // safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes memory data);
     }
 
     function withdraw() public payable onlyRole(ADMIN) {

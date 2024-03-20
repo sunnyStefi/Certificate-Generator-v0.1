@@ -23,7 +23,7 @@ SEPOLIA_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broa
 
 push:
 	git add .
-	git commit -m "interactions"
+	git commit -m "unit tests"
 	git push origin main
 
 deploy: 
@@ -46,5 +46,7 @@ transferNFT:
 	forge script script/Interaction.s.sol:transferNFT $(SEPOLIA_ARGS)
 
 evaluate:
-	forge script script/Interaction.s.sol:transferNFT $(SEPOLIA_ARGS)
+	forge script script/Interaction.s.sol:evaluate $(SEPOLIA_ARGS)
 
+makeCertificate:
+	forge script script/Interaction.s.sol:makeCertificate $(SEPOLIA_ARGS)

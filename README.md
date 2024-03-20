@@ -16,10 +16,13 @@ Opensea
 
 ### libs
 
-### Deploy interaction to testnet
+### Deploy interactions to testnet
 
-Objective: deploy the contract on testnet and create the NFT programmatically (Interaction.s.sol)
-Result: see the NFT on metamask
 Steps:
 
-1.
+1.  ALICE Creates 2 courses with 5 and 1 places.
+2.  ALICE sets up BOB as evaluator
+3.  CARL will buy a course
+4.  ALICE sends him a NFT
+5.  BOB will evaluate CARL with 7/10
+6.  ALICE will make a certificate for CARL and burn all the (4) other courses NFTs

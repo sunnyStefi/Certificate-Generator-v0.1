@@ -4,26 +4,26 @@ pragma solidity ^0.8.13;
 import {Script, console} from "forge-std/Script.sol";
 // import {Dispatcher} from "../src/Dispatcher.sol";
 import {Course} from "../src/Course.sol";
-// import {Register} from "../src/Register.sol";
+import {CreateCourses} from "./Interaction.s.sol";
 
 contract Deployment is Script {
     uint256 deployerKey;
     uint256 aliceKey;
+    CreateCourses createCourses;
 
     function setUp() public {}
 
-    function run() external returns (Course) {
+    function run() external returns (Course, CreateCourses) {
         (, aliceKey) = makeAddrAndKey("alice");
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY");
-        } else {
-            deployerKey = aliceKey;
+            vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         }
-        vm.startBroadcast(deployerKey);
-        // Register register = new Register();
+        if (block.chainid == 31337) {
+            vm.startBroadcast(aliceKey); //Deploy utils contract for testing
+            createCourses = new CreateCourses();
+        }
         Course university = new Course();
-        // Dispatcher dispatcher = new Dispatcher();
         vm.stopBroadcast();
-        return (university);
+        return (university, createCourses);
     }
 }
