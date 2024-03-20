@@ -20,10 +20,15 @@ SEPOLIA_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broa
 #@ prevents to print the command 
 # mint:
 # 	@forge script script/Interaction.s.sol:MintBasicNFT $(SEPOLIA_ARGS)
+gas:
+	forge test --gas-report
+
+snap:
+	forge snapshot --asc
 
 push:
 	git add .
-	git commit -m "unit tests"
+	git commit -m "tests"
 	git push origin main
 
 deploy: 

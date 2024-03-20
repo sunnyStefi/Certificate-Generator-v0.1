@@ -41,8 +41,7 @@ contract CourseTest is Test {
     }
 
     function test_setUpEvaluator() public {
-        vm.prank(ALICE);
-        courses.setUpEvaluator(EVE);
+        setUpEvaluator();
         assert(courses.getEvaluator(0) == EVE);
     }
 
@@ -109,50 +108,45 @@ contract CourseTest is Test {
 
     //test failing.. buy course 2 times ecc more later when checking again the contract
 
+    //todo this is integration
     function test_mintNFTandEvaluate() public {
-        // HERE
-        test_allStudentsBuyACourse();
-        test_setUpEvaluator();
-        vm.startPrank(ALICE);
-        courses.transferCourseNFT(BOB, 0);
-        courses.transferCourseNFT(CARL, 0);
-        courses.transferCourseNFT(DAVID, 0);
-        vm.stopPrank();
-        vm.startPrank(address(EVE));
-        bool evaluation1 = courses.evaluate(0, BOB, 6);
-        bool evaluation2 = courses.evaluate(0, CARL, 4);
-        bool evaluation3 = courses.evaluate(0, DAVID, 8);
-        vm.stopPrank();
+        createCoursesUtils();
+        setUpEvaluator();
+        buyCoursesUtils();
+        transferNFTsUtils();
+        evaluate();
         assert(courses.getCourseToEvaluateStudents(0).length == 3);
     }
 
     function test_makeCertificates() public {
-        test_mintNFTandEvaluate();
+        createCoursesUtils();
+        setUpEvaluator();
+        buyCoursesUtils();
+        transferNFTsUtils();
+        evaluate();
         vm.prank(ALICE);
-        courses.makeCertificates(0, "asd");
+        courses.makeCertificates(0, "newUri");
+        assert(courses.balanceOf(BOB, 0) == 1);
         assert(courses.balanceOf(CARL, 0) == 0);
         assert(courses.balanceOf(DAVID, 0) == 1);
+        uint256 totalPlaces = courses.getCreatedCurseCounter(0);
+        address[] memory promotedStudents = courses.getPromotedStudents(0);
+        uint256 nftLeftExpected = 2;
+        uint256 nftLeft = promotedStudents.length;
+        assert(nftLeftExpected == nftLeft);
     }
-
-    // function test_
-
-    // function test_evaluateStudentFailsIfNoEvaluator() public {
-    //     test_setUpEvaluator();
-    //     test_studentOwnsCourseNFT();
-    //     vm.prank(address(ALICE));
-    //     vm.expectRevert(
-    //         abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, ALICE, EVALUATOR)
-    //     );
-    //     bool success = courses.evaluate(0, BOB, 6);
-    //     assert(success);
-    // }
-
+    
     function createCoursesUtils() private {
         vm.startPrank(ALICE);
         (uint256[] memory ids, uint256[] memory values, string[] memory testUri, uint256[] memory fees) =
             createCourses.setUpCreate();
         courses.createCourses(ids, values, "0x", testUri, fees);
         vm.stopPrank();
+    }
+
+    function setUpEvaluator() private {
+        vm.prank(ALICE);
+        courses.setUpEvaluator(EVE);
     }
 
     function buyCoursesUtils() private {
@@ -169,5 +163,21 @@ contract CourseTest is Test {
         courses.buyCourse{value: VALUE_001}(0);
         vm.prank(ALICE);
         courses.transferCourseNFT(BOB, 0);
+    }
+
+    function transferNFTsUtils() private {
+        vm.startPrank(ALICE);
+        courses.transferCourseNFT(BOB, 0);
+        courses.transferCourseNFT(CARL, 0);
+        courses.transferCourseNFT(DAVID, 0);
+        vm.stopPrank();
+    }
+
+    function evaluate() private {
+        vm.startPrank(EVE);
+        bool evaluation1 = courses.evaluate(0, BOB, 6);
+        bool evaluation2 = courses.evaluate(0, CARL, 4);
+        bool evaluation3 = courses.evaluate(0, DAVID, 8);
+        vm.stopPrank();
     }
 }

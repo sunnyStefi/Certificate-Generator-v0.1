@@ -71,7 +71,7 @@ contract BuyCourses is Script {
         }
     }
 
-    function buyCourse(uint256 broadcasterKey, address mostRecentlyDeployed) private{
+    function buyCourse(uint256 broadcasterKey, address mostRecentlyDeployed) private {
         vm.startBroadcast(broadcasterKey);
         Course(mostRecentlyDeployed).buyCourse{value: VALUE_001}(0);
         vm.stopBroadcast();
@@ -89,8 +89,12 @@ contract transferNFT is Script {
             deployerKey = vm.envUint("PRIVATE_KEY");
         }
         vm.startBroadcast(deployerKey);
+        address BOB = address(0xf015f6a767167b3f21e03D93b475c26D32DCc399);
         address CARL = address(0x0B65fbabA12AACFD7c2CE17f9cbcCf82bc7a4236);
+        address DAVID = address(0xF4D3a3461708F7D6DE47Da423851e3a2807eDaAD);
+        Course(mostRecentlyDeployed).transferCourseNFT(BOB, 0);
         Course(mostRecentlyDeployed).transferCourseNFT(CARL, 0);
+        Course(mostRecentlyDeployed).transferCourseNFT(DAVID, 0);
         vm.stopBroadcast();
     }
 }
@@ -106,8 +110,12 @@ contract evaluate is Script {
             deployerKey = vm.envUint("PRIVATE_KEY_BOB");
         }
         vm.startBroadcast(deployerKey);
+        address BOB = address(0xf015f6a767167b3f21e03D93b475c26D32DCc399);
         address CARL = address(0x0B65fbabA12AACFD7c2CE17f9cbcCf82bc7a4236);
-        Course(mostRecentlyDeployed).evaluate(0, CARL, 7);
+        address DAVID = address(0xF4D3a3461708F7D6DE47Da423851e3a2807eDaAD);
+        Course(mostRecentlyDeployed).evaluate(0, BOB, 6);
+        Course(mostRecentlyDeployed).evaluate(0, CARL, 4);
+        Course(mostRecentlyDeployed).evaluate(0, DAVID, 8);
         vm.stopBroadcast();
     }
 }
