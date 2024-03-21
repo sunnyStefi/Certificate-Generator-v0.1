@@ -33,8 +33,8 @@ contract CreateCourses is Script {
         ids[1] = 1; //advanced math course
         values[0] = 7;
         values[1] = 1;
-        testUri[0] = "https://ipfs.io/ipfs/Qmd4Z8G6vh4H8Cu4UXT78Vr8pq8WN92SScBntbRe6npvYG/0.json";
-        testUri[1] = "https://ipfs.io/ipfs/Qmd4Z8G6vh4H8Cu4UXT78Vr8pq8WN92SScBntbRe6npvYG/1.json";
+        testUri[0] = "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/0.json";
+        testUri[1] = "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/1.json";
         fees[0] = VALUE_001;
         fees[1] = VALUE_001;
         return (ids, values, testUri, fees);
@@ -107,7 +107,7 @@ contract Evaluate is Script {
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
 
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY_BOB");
+            deployerKey = vm.envUint("PRIVATE_KEY_EVE");
         }
         vm.startBroadcast(deployerKey);
         address BOB = address(0xf015f6a767167b3f21e03D93b475c26D32DCc399);
@@ -121,7 +121,6 @@ contract Evaluate is Script {
 }
 
 contract MakeCertificates is Script {
-    uint256 VALUE_001 = 0.01 ether;
     string newUri = "https://ipfs.io/ipfs/QmcbWTvWMBoRwvJdXUDjuaRXD5w6BKxTeUe3vNZ6Hm4zg6/0_success.json";
     uint256 deployerKey;
 
@@ -133,6 +132,27 @@ contract MakeCertificates is Script {
         }
         vm.startBroadcast(deployerKey);
         Course(mostRecentlyDeployed).makeCertificates(0, newUri);
+        vm.stopBroadcast();
+    }
+}
+
+contract RemoveAll is Script {
+    uint256 deployerKey;
+
+    function run() external {
+        address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
+
+        if (block.chainid == 11155111) {
+            deployerKey = vm.envUint("PRIVATE_KEY");
+        }
+        vm.startBroadcast(deployerKey);
+        uint256[] memory ids = new uint256[](2);
+        uint256[] memory values = new uint256[](2);
+        ids[0] = 0; //basic math course
+        ids[1] = 1; //advanced math course
+        values[0] = 2;
+        values[1] = 0;
+        Course(mostRecentlyDeployed).removeCourses(ids, values);
         vm.stopBroadcast();
     }
 }

@@ -20,6 +20,11 @@ Opensea
 - forge installed
 
 ### Deploy interactions to testnet
-make
- - deploy
- - 
+**make**
+  1. deploy
+  2. createCourses
+  3. setUpEvaluator
+  4. buyCourses
+  5. transferNFT
+  6. evaluate
+  7. makeCertificates

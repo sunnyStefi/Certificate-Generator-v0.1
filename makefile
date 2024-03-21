@@ -3,7 +3,6 @@ include .env
 .PHONY: all test clean deploy fund help install snapshot format anvil #do no generate any files
 
 #target that has to be executed regardless of its timestamp (PHONY)
-all: clean remove install update build
 
 clean  :; forge clean
 
@@ -40,6 +39,9 @@ build:
 
 # sepolia scripts to perform standard user operations with Course contract
 
+removeAll:
+	forge script script/Interaction.s.sol:RemoveAll $(SEPOLIA_ARGS) 
+
 createCourses:
 	forge script script/Interaction.s.sol:CreateCourses $(SEPOLIA_ARGS) 
 
@@ -57,3 +59,5 @@ evaluate:
 
 makeCertificates:
 	forge script script/Interaction.s.sol:MakeCertificates $(SEPOLIA_ARGS)
+
+all: createCourses setUpEvaluator buyCourses  transferNFT evaluate  makeCertificates

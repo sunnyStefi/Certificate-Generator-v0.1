@@ -33,7 +33,7 @@ contract Course is ERC1155, AccessControl {
     string public constant JSON = ".json";
     string public constant ID_JSON = "/{id}.json";
     string public constant PROTOCOL = "https://ipfs.io/ipfs/";
-    string public constant URI_PINATA = "QmcbWTvWMBoRwvJdXUDjuaRXD5w6BKxTeUe3vNZ6Hm4zg6";
+    string public constant URI_PINATA = "QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF";
     uint256 public constant BASE_COURSE_FEE = 0.01 ether;
 
     // Certificate s_certificate_contract;
@@ -74,7 +74,6 @@ contract Course is ERC1155, AccessControl {
         _grantRole(ADMIN, address(this));
 
         s_coursesCounter = 0;
-        //s_certificate_contract = new Certificate();
     }
 
     function getSender() public view returns (bool) {
@@ -224,7 +223,6 @@ contract Course is ERC1155, AccessControl {
 
     function uri(uint256 _tokenid) public view override returns (string memory) {
         return s_uris[_tokenid];
-        // return string.concat(BASE_URI, Strings.toString(_tokenid), JSON);
     }
 
     function setData(uint256[] memory courseId, uint256[] memory values, string[] memory uri, uint256[] memory fees)
@@ -309,5 +307,13 @@ contract Course is ERC1155, AccessControl {
         }
 
         return promoted;
+    }
+
+    function setUri(string memory uri) public onlyRole(ADMIN) {
+        _setURI(uri);
+    }
+
+    function _setURI(string memory newuri) internal override {
+        super._setURI(newuri);
     }
 }
