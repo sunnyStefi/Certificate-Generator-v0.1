@@ -14,15 +14,12 @@ After that specific date, each Course NFT token can either
 ERC1155
 Opensea
 
-### libs
+### Prerequisites
+- .env file with 5 metamask accounts private keys (see env. example)
+- ADMIN account must have more than 0.5 eth, others more than 0.02 eth
+- forge installed
 
 ### Deploy interactions to testnet
-
-Steps:
-
-1.  ALICE Creates 2 courses with 5 and 1 places.
-2.  ALICE sets up BOB as evaluator
-3.  CARL will buy a course
-4.  ALICE sends him a NFT
-5.  BOB will evaluate CARL with 7/10
-6.  ALICE will make a certificate for CARL and burn all the (4) other courses NFTs
+make
+ - deploy
+ - 

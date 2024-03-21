@@ -78,7 +78,7 @@ contract BuyCourses is Script {
     }
 }
 
-contract transferNFT is Script {
+contract TransferNFT is Script {
     uint256 VALUE_001 = 0.01 ether;
     uint256 deployerKey;
 
@@ -99,7 +99,7 @@ contract transferNFT is Script {
     }
 }
 
-contract evaluate is Script {
+contract Evaluate is Script {
     uint256 VALUE_001 = 0.01 ether;
     uint256 deployerKey;
 
@@ -120,7 +120,7 @@ contract evaluate is Script {
     }
 }
 
-contract makeCertificate is Script {
+contract MakeCertificates is Script {
     uint256 VALUE_001 = 0.01 ether;
     string newUri = "https://ipfs.io/ipfs/QmcbWTvWMBoRwvJdXUDjuaRXD5w6BKxTeUe3vNZ6Hm4zg6/0_success.json";
     uint256 deployerKey;

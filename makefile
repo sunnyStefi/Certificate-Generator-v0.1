@@ -35,23 +35,25 @@ deploy:
 	sudo rm -rf broadcast && sudo rm -rf cache
 	@forge script script/Deployment.s.sol:Deployment $(SEPOLIA_ARGS)
 
-courses:
+build:
 	forge build --skip script --skip test --skip progress
-	
+
+# sepolia scripts to perform standard user operations with Course contract
+
 createCourses:
-	forge script script/Interaction.s.sol:createCourses $(SEPOLIA_ARGS) 
+	forge script script/Interaction.s.sol:CreateCourses $(SEPOLIA_ARGS) 
 
 setUpEvaluator:
-	forge script script/Interaction.s.sol:setUpEvaluator $(SEPOLIA_ARGS)
+	forge script script/Interaction.s.sol:SetUpEvaluator $(SEPOLIA_ARGS)
 
-buyCourse:
-	forge script script/Interaction.s.sol:buyCourse $(SEPOLIA_ARGS)
+buyCourses:
+	forge script script/Interaction.s.sol:BuyCourses $(SEPOLIA_ARGS)
 
 transferNFT:
-	forge script script/Interaction.s.sol:transferNFT $(SEPOLIA_ARGS)
+	forge script script/Interaction.s.sol:TransferNFT $(SEPOLIA_ARGS)
 
 evaluate:
-	forge script script/Interaction.s.sol:evaluate $(SEPOLIA_ARGS)
+	forge script script/Interaction.s.sol:Evaluate $(SEPOLIA_ARGS)
 
-makeCertificate:
-	forge script script/Interaction.s.sol:makeCertificate $(SEPOLIA_ARGS)
+makeCertificates:
+	forge script script/Interaction.s.sol:MakeCertificates $(SEPOLIA_ARGS)
