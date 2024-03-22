@@ -114,7 +114,7 @@ contract CourseTest is Test {
         setUpEvaluator();
         buyCoursesUtils();
         transferNFTsUtils();
-        evaluate();
+        evaluateUtils();
         assert(courses.getCourseToEvaluateStudents(0).length == 3);
     }
 
@@ -123,7 +123,7 @@ contract CourseTest is Test {
         setUpEvaluator();
         buyCoursesUtils();
         transferNFTsUtils();
-        evaluate();
+        evaluateUtils();
         vm.prank(ALICE);
         courses.makeCertificates(0, "newUri");
         assert(courses.balanceOf(BOB, 0) == 1);
@@ -173,7 +173,7 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-    function evaluate() private {
+    function evaluateUtils() private {
         vm.startPrank(EVE);
         bool evaluation1 = courses.evaluate(0, BOB, 6);
         bool evaluation2 = courses.evaluate(0, CARL, 4);

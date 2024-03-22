@@ -38,8 +38,8 @@ contract Course is ERC1155, AccessControl {
 
     // Certificate s_certificate_contract;
 
-    uint256 private s_coursesCounter;
     address[] private s_evaluators;
+    uint256 private s_coursesTypeCounter;
     mapping(uint256 => string) private s_uris; // each course has an uri that points to its metadata
     mapping(address => uint256[]) private s_userToCourses;
     mapping(uint256 => uint256) private s_courseToFee;
@@ -73,7 +73,7 @@ contract Course is ERC1155, AccessControl {
         _grantRole(ADMIN, _msgSender());
         _grantRole(ADMIN, address(this));
 
-        s_coursesCounter = 0;
+        s_coursesTypeCounter = 0;
     }
 
     function getSender() public view returns (bool) {
@@ -94,26 +94,22 @@ contract Course is ERC1155, AccessControl {
         string[] memory uris,
         uint256[] memory fees
     ) public onlyRole(ADMIN) returns (uint256) {
-        uint256 typeOfCourses = values.length;
-        s_coursesCounter += typeOfCourses; // #0,1
+        s_coursesTypeCounter += values.length;
         setData(ids, values, uris, fees);
         _mintBatch(_msgSender(), ids, values, data);
         //approve their transfer for later // can we costumise this? e.g they cannot move it around
         setApprovalForAll(_msgSender(), true);
-        emit Courses_CoursesCreated(typeOfCourses);
+        emit Courses_CoursesCreated(s_coursesTypeCounter);
         return 2;
     }
 
     function removeCourses(
         uint256[] memory ids,
         uint256[] memory values //remove from
-    ) public onlyRole(ADMIN) returns (uint256) {
-        uint256 numberOfCourses = values.length;
-        s_coursesCounter -= numberOfCourses; // check if s_counter is still valid
+    ) public onlyRole(ADMIN) {
         updateData(ids, values);
         _burnBatch(_msgSender(), ids, values);
-        emit Courses_CoursesRemoved(numberOfCourses);
-        return s_coursesCounter;
+        emit Courses_CoursesRemoved(values.length);
     }
 
     function removeFailedStudentCourse(
@@ -121,11 +117,20 @@ contract Course is ERC1155, AccessControl {
         uint256 id,
         uint256 value //remove from
     ) public onlyRole(ADMIN) returns (uint256) {
-        s_coursesCounter -= value; // check if s_counter is still valid
         s_createdCourseToCounter[id] -= 1;
         _burn(from, id, value);
         emit Courses_CoursesRemoved(value);
-        return s_coursesCounter;
+        return s_createdCourseToCounter[id] -= 1;
+    }
+
+    function burn(
+        address from,
+        uint256 id,
+        uint256 value //remove from
+    ) public onlyRole(ADMIN) returns (uint256) {
+        s_createdCourseToCounter[id] -= 1;
+        _burn(from, id, value);
+        emit Courses_CoursesRemoved(value);
     }
 
     // function getCoursesPerUser(address user) public view returns (Course[] memory) {
@@ -200,12 +205,12 @@ contract Course is ERC1155, AccessControl {
         //todo all evaluated = enrolled
         //Burns for the not promoted students
         uint256 evaluatedStudents = s_courseToEvaluatedStudents[courseId].length;
-        uint256 notSoldCourses = s_createdCourseToCounter[courseId] - s_purchasedCourseToCounter[courseId];
-        uint256[] memory ids = new uint256[](1);
-        uint256[] memory values = new uint256[](1);
-        ids[0] = courseId;
-        values[0] = notSoldCourses;
-        removeCourses(ids, values);
+        // uint256 notSoldCourses = s_createdCourseToCounter[courseId] - s_purchasedCourseToCounter[courseId]; TODO CHECK
+        // uint256[] memory ids = new uint256[](1);
+        // uint256[] memory values = new uint256[](1);
+        // ids[0] = courseId;
+        // values[0] = notSoldCourses;
+        // removeCourses(ids, values);
 
         for (uint256 i = 0; i < evaluatedStudents; i++) {
             if (s_courseToEvaluatedStudents[courseId][i].mark < 6) {
@@ -232,7 +237,7 @@ contract Course is ERC1155, AccessControl {
         //check same length
         // todo make another Struct with uri, fees, owner
         if (courseId.length != uri.length) revert Courses_SetCoursesUris_ParamsLengthDoNotMatch(); //add  fees
-        for (uint256 i = 0; i < s_coursesCounter; i++) {
+        for (uint256 i = 0; i < s_coursesTypeCounter; i++) {
             s_createdCourseToCounter[courseId[i]] += values[i];
             s_uris[courseId[i]] = uri[i];
             s_courseToFee[courseId[i]] = fees[i];
@@ -244,7 +249,7 @@ contract Course is ERC1155, AccessControl {
         //check same length
         // todo make another Struct with uri, fees, owner
         if (courseId.length != values.length) revert Courses_SetCoursesUris_ParamsLengthDoNotMatch(); //add  fees
-        for (uint256 i = 0; i < s_coursesCounter; i++) {
+        for (uint256 i = 0; i < s_coursesTypeCounter; i++) {
             s_createdCourseToCounter[courseId[i]] -= values[i];
         }
     }
@@ -287,10 +292,6 @@ contract Course is ERC1155, AccessControl {
         return s_courseToEvaluatedStudents[courseId];
     }
 
-    function getCreatedCurseCounter(uint256 courseId) public view returns (uint256) {
-        return s_createdCourseToCounter[courseId];
-    }
-
     function getPromotedStudents(uint256 courseId) public view returns (address[] memory) {
         uint256 count = 0;
         uint256 evaluatedStudentsPerCourse = s_courseToEvaluatedStudents[courseId].length;
@@ -315,5 +316,13 @@ contract Course is ERC1155, AccessControl {
 
     function _setURI(string memory newuri) internal override {
         super._setURI(newuri);
+    }
+
+    function getCoursesCounter() public view returns (uint256) {
+        return s_coursesTypeCounter;
+    }
+
+    function getCreatedCurseCounter(uint256 courseId) public view returns (uint256) {
+        return s_createdCourseToCounter[courseId];
     }
 }
