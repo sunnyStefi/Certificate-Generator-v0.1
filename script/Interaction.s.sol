@@ -52,7 +52,7 @@ contract SetUpEvaluator is Script {
         }
         vm.startBroadcast(deployerKey);
         address EVE = address(0x34Fc21D79de671e5e05Ad7156A663Af8C3702E17);
-        Course(mostRecentlyDeployed).setUpEvaluator(EVE);
+        Course(mostRecentlyDeployed).setUpEvaluator(EVE, 0);
         vm.stopBroadcast();
     }
 }

@@ -27,7 +27,7 @@ snap:
 
 push:
 	git add .
-	git commit -m "integration tests"
+	git commit -m "unit tests"
 	git push origin main
 
 deploy: 

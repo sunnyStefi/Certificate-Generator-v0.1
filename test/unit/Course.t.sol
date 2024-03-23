@@ -7,8 +7,11 @@ import {Course} from "../../src/Course.sol";
 import {Deployment} from "../../script/Deployment.s.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {CreateCourses} from "../../script/Interaction.s.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract CourseTest is Test {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     Deployment deployer;
     Course public courses;
     CreateCourses public createCourses;
@@ -18,6 +21,7 @@ contract CourseTest is Test {
     address public CARL = makeAddr("carl"); //STUDENT  2
     address public DAVID = makeAddr("david"); //STUDENT 3
     address public EVE = makeAddr("eve"); // EVALUATOR
+    address public FRANK = makeAddr("frank"); // JUST A GUY
 
     bytes32 public constant ADMIN = keccak256("ADMIN");
     bytes32 public constant EVALUATOR = keccak256("EVALUATOR");
@@ -41,20 +45,46 @@ contract CourseTest is Test {
     }
 
     function test_setUpEvaluator() public {
-        setUpEvaluator();
-        assert(courses.getEvaluator(0) == EVE);
+        setUpEvaluatorUtils();
+        address[] memory evaluators = courses.getEvaluators(0);
+        assert(evaluators[0] == EVE);
+    }
+
+    function test_setUpEvaluator_Fails_AlreadyAssignedForThisCourse() public {
+        setUpEvaluatorUtils();
+        vm.startPrank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(Course.Course_EvaluatorAlreadyAssignedForThisCourse.selector, EVE));
+        courses.setUpEvaluator(EVE, 0);
+        vm.stopPrank();
+    }
+
+    function test_setUpEvaluator_Fails_TooManyEvaluatorsForThisCourse() public {
+        vm.startPrank(ALICE);
+        courses.setUpEvaluator(ALICE, 0);
+        courses.setUpEvaluator(BOB, 0);
+        courses.setUpEvaluator(CARL, 0);
+        courses.setUpEvaluator(DAVID, 0);
+        courses.setUpEvaluator(EVE, 0);
+        assert(courses.getMaxEvaluatorsPerCourse() == courses.getEvaluators(0).length);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Course.Course_TooManyEvaluatorsForThisCourse.selector, courses.getMaxEvaluatorsPerCourse()
+            )
+        );
+        courses.setUpEvaluator(FRANK, 0);
+        vm.stopPrank();
     }
 
     function test_setUpEvaluatorFailsNoPermission() public {
         vm.prank(BOB);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, BOB, ADMIN));
-        courses.setUpEvaluator(EVE);
+        courses.setUpEvaluator(EVE, 0);
     }
 
     function test_getCourseUri() public {
         createCoursesUtils();
         string memory uri = courses.getCourseUri(0);
-        string memory firstCourseUri = "https://ipfs.io/ipfs/Qmd4Z8G6vh4H8Cu4UXT78Vr8pq8WN92SScBntbRe6npvYG/0.json";
+        string memory firstCourseUri = "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/0.json";
         assert(keccak256(abi.encodePacked(uri)) == keccak256(abi.encodePacked(firstCourseUri)));
     }
 
@@ -99,19 +129,57 @@ contract CourseTest is Test {
         vm.stopPrank();
         assert(courses.balanceOf(BOB, 0) == 1);
         assert(courses.balanceOf(DAVID, 0) == 0);
+    }
 
-        // vm.prank(BOB);
-        // courses.safeTransferFrom(BOB, DAVID, 0, 1, "0x");
-        // assert(courses.balanceOf(DAVID, 0) == 0);
-        // assert(courses.balanceOf(BOB, 0) == 1);
+    function test_beforeMakeCertificates_storageVariables() public {
+        evaluations();
+        assert(courses.getCreatedPlacesCounter(0) == 7);
+        assert(courses.getPurchasedPlacesCounter(0) == 3);
+        (,, uint256 promoted, uint256 failed) = courses.getPromotedStudents(0);
+        assert(promoted == 2);
+        assert(failed == 1);
+    }
+
+    function test_beforeMakeCertificate_canRemoveUnsoldCourses() public {
+        evaluations();
+        removeUnsoldCoursesUtils();
+        assert(courses.getCreatedPlacesCounter(0) == 3);
+        assert(courses.getEvaluatedStudents(0) == 3);
+    }
+
+    function test_beforeMakeCertificate_removeFailedStudentPlaces() public {
+        evaluations();
+        removeUnsoldCoursesUtils();
+        assert(courses.getCreatedPlacesCounter(0) == 3);
+        assert(courses.balanceOf(CARL, 0) == 1);
+        vm.prank(ALICE);
+        courses.removeFailedStudentPlaces(CARL, 0, 1);
+        assert(courses.balanceOf(CARL, 0) == 0);
+    }
+
+    function test_cannotRemoveCertificatesForPromotedStudents() public {
+        evaluations();
+        makeCertificatesUtils();
+        assert(courses.balanceOf(BOB, 0) == 1);
+        vm.prank(ALICE);
+        courses.burn(BOB, 0, 1);
+        assert(courses.balanceOf(BOB, 0) == 0);
+    }
+
+    function evaluations() private {
+        createCoursesUtils();
+        setUpEvaluatorUtils();
+        buyCoursesUtils();
+        transferNFTsUtils();
+        evaluateUtils();
     }
 
     //test failing.. buy course 2 times ecc more later when checking again the contract
 
-    //todo this is integration
+    //todo put all integration here: integration it's about more random interaction stuff
     function test_mintNFTandEvaluate() public {
         createCoursesUtils();
-        setUpEvaluator();
+        setUpEvaluatorUtils();
         buyCoursesUtils();
         transferNFTsUtils();
         evaluateUtils();
@@ -120,7 +188,7 @@ contract CourseTest is Test {
 
     function test_makeCertificates() public {
         createCoursesUtils();
-        setUpEvaluator();
+        setUpEvaluatorUtils();
         buyCoursesUtils();
         transferNFTsUtils();
         evaluateUtils();
@@ -129,13 +197,9 @@ contract CourseTest is Test {
         assert(courses.balanceOf(BOB, 0) == 1);
         assert(courses.balanceOf(CARL, 0) == 0);
         assert(courses.balanceOf(DAVID, 0) == 1);
-        uint256 totalPlaces = courses.getCreatedCurseCounter(0);
-        address[] memory promotedStudents = courses.getPromotedStudents(0);
-        uint256 nftLeftExpected = 2;
-        uint256 nftLeft = promotedStudents.length;
-        assert(nftLeftExpected == nftLeft);
+        assert(keccak256(abi.encodePacked(courses.uri(0))) == keccak256(abi.encodePacked("newUri")));
     }
-    
+
     function createCoursesUtils() private {
         vm.startPrank(ALICE);
         (uint256[] memory ids, uint256[] memory values, string[] memory testUri, uint256[] memory fees) =
@@ -144,9 +208,9 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-    function setUpEvaluator() private {
+    function setUpEvaluatorUtils() private {
         vm.prank(ALICE);
-        courses.setUpEvaluator(EVE);
+        courses.setUpEvaluator(EVE, 0);
     }
 
     function buyCoursesUtils() private {
@@ -179,5 +243,19 @@ contract CourseTest is Test {
         bool evaluation2 = courses.evaluate(0, CARL, 4);
         bool evaluation3 = courses.evaluate(0, DAVID, 8);
         vm.stopPrank();
+    }
+
+    function makeCertificatesUtils() private {
+        vm.prank(ALICE);
+        courses.makeCertificates(0, "newUri");
+    }
+
+    function removeUnsoldCoursesUtils() private {
+        uint256[] memory ids = new uint256[](1);
+        uint256[] memory values = new uint256[](1);
+        ids[0] = 0;
+        values[0] = 4;
+        vm.prank(ALICE);
+        courses.removeCourses(ids, values);
     }
 }

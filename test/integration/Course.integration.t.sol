@@ -32,20 +32,6 @@ contract CourseTest is Test {
         vm.deal(EVE, 1 ether); //EVALUATOR
     }
 
-    function test_canRemoveCertificatesForPromotedStudents() public {
-        createCoursesUtils();
-        setUpEvaluator();
-        buyCoursesUtils();
-        transferNFTsUtils();
-        evaluateUtils();
-        makeCertificatesUtils();
-        console.log(courses.getCoursesCounter());
-        // assert(courses.balanceOf(BOB,0) == 1);
-        // vm.prank(ALICE);
-        // courses.burn(BOB,0,1);
-        // assert(courses.balanceOf(BOB,0) == 0);
-    }
-
     function createCoursesUtils() private {
         vm.startPrank(ALICE);
         (uint256[] memory ids, uint256[] memory values, string[] memory testUri, uint256[] memory fees) =
@@ -54,9 +40,9 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-    function setUpEvaluator() private {
+    function setUpEvaluatorUtils() private {
         vm.prank(ALICE);
-        courses.setUpEvaluator(EVE);
+        courses.setUpEvaluator(EVE, 0);
     }
 
     function buyCoursesUtils() private {
@@ -89,10 +75,5 @@ contract CourseTest is Test {
         bool evaluation2 = courses.evaluate(0, CARL, 4);
         bool evaluation3 = courses.evaluate(0, DAVID, 8);
         vm.stopPrank();
-    }
-
-    function makeCertificatesUtils() private {
-        vm.prank(ALICE);
-        courses.makeCertificates(0, "newUri");
     }
 }
