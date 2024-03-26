@@ -48,10 +48,10 @@ contract Course is ERC1155, AccessControl {
 
     mapping(uint256 => uint256) private s_courseToFee;
     mapping(uint256 => EnumerableSet.AddressSet) private s_courseToEvaluators;
-    mapping(uint256 => uint256) private s_createdPlacesToCounter;
+    mapping(uint256 => uint256) private s_placesToCounter;
     mapping(uint256 => uint256) private s_purchasedPlacesToCounter;
     mapping(uint256 => uint256) private s_courseToPassedUsers;
-    mapping(uint256 => string) private s_uris; // each course has an uri that points to its metadata
+    mapping(uint256 => string) private s_courseToUri; // each course has an uri that points to its metadata
     mapping(uint256 => address) private s_courseToCreator;
     mapping(uint256 => address[]) private s_courseToEnrolledStudents;
     mapping(address => uint256[]) private s_userToCourses;
@@ -95,6 +95,9 @@ contract Course is ERC1155, AccessControl {
         s_coursesTypeCounter = 0;
     }
 
+    /**
+     * Courses
+     */
     function createCourses(
         uint256[] memory ids,
         uint256[] memory values,
@@ -102,7 +105,6 @@ contract Course is ERC1155, AccessControl {
         string[] memory uris,
         uint256[] memory fees
     ) public onlyRole(ADMIN) returns (uint256) {
-        s_coursesTypeCounter += values.length;
         setData(ids, values, uris, fees);
         _mintBatch(_msgSender(), ids, values, data);
         setApprovalForAll(_msgSender(), true);
@@ -110,6 +112,40 @@ contract Course is ERC1155, AccessControl {
         return ids.length;
     }
 
+    function removePlaces(
+        uint256[] memory ids,
+        uint256[] memory values //remove from
+    ) public onlyRole(ADMIN) {
+        updateData(ids, values);
+        _burnBatch(_msgSender(), ids, values);
+        emit Courses_CoursesRemoved(values.length);
+    }
+
+    function removeFailedStudentPlaces(
+        address from,
+        uint256 id,
+        uint256 value //remove from
+    ) public onlyRole(ADMIN) returns (uint256) {
+        //check if the student is really failed
+        s_placesToCounter[id] -= 1;
+        _burn(from, id, value);
+        emit Courses_CoursesRemoved(value);
+        return s_placesToCounter[id] -= 1;
+    }
+
+    function removePlaces(
+        address from,
+        uint256 id,
+        uint256 value //remove from
+    ) public onlyRole(ADMIN) returns (uint256) {
+        s_placesToCounter[id] -= 1;
+        _burn(from, id, value);
+        emit Courses_CoursesRemoved(value);
+    }
+
+    /**
+     * Evaluator
+     */
     function setUpEvaluator(address evaluator, uint256 courseId)
         public
         onlyRole(ADMIN)
@@ -139,37 +175,9 @@ contract Course is ERC1155, AccessControl {
         grantRole(EVALUATOR, evaluator);
     }
 
-    function removePlaces(
-        uint256[] memory ids,
-        uint256[] memory values //remove from
-    ) public onlyRole(ADMIN) {
-        updateData(ids, values);
-        _burnBatch(_msgSender(), ids, values);
-        emit Courses_CoursesRemoved(values.length);
-    }
-
-    function removeFailedStudentPlaces(
-        address from,
-        uint256 id,
-        uint256 value //remove from
-    ) public onlyRole(ADMIN) returns (uint256) {
-        //check if the student is really failed
-        s_createdPlacesToCounter[id] -= 1;
-        _burn(from, id, value);
-        emit Courses_CoursesRemoved(value);
-        return s_createdPlacesToCounter[id] -= 1;
-    }
-
-    function removePlaces(
-        address from,
-        uint256 id,
-        uint256 value //remove from
-    ) public onlyRole(ADMIN) returns (uint256) {
-        s_createdPlacesToCounter[id] -= 1;
-        _burn(from, id, value);
-        emit Courses_CoursesRemoved(value);
-    }
-
+    /**
+     * Purchase
+     */
     function buyPlace(uint256 courseId) public payable returns (bool) {
         //todo exceptions do not add replicated courses
         if (msg.value < s_courseToFee[courseId]) {
@@ -186,6 +194,9 @@ contract Course is ERC1155, AccessControl {
         safeTransferFrom(s_courseToCreator[courseId], student, courseId, 1, "0x");
     }
 
+    /**
+     * Evaluation
+     */
     function evaluate(uint256 courseId, address student, uint256 mark)
         public
         onlyRole(EVALUATOR)
@@ -215,24 +226,14 @@ contract Course is ERC1155, AccessControl {
         return valid_match;
     }
 
-    //Only Admin can approve whom is transferred to
-    function setApprovalForAll(address operator, bool approved) public override onlyRole(ADMIN) {
-        super.setApprovalForAll(operator, approved);
-    }
-
-    function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes memory data)
-        public
-        override
-        onlyRole(ADMIN)
-    {
-        super.safeTransferFrom(from, to, id, value, data);
-    }
-
+    /**
+     * Make certificates
+     */
     function makeCertificates(uint256 courseId, string memory certificateUri) public onlyRole(ADMIN) {
         //todo all evaluated = enrolled
         //Burns for the not promoted students
         uint256 evaluatedStudents = s_courseToEvaluatedStudents[courseId].length;
-        uint256 notSoldCourses = s_createdPlacesToCounter[courseId] - s_purchasedPlacesToCounter[courseId];
+        uint256 notSoldCourses = s_placesToCounter[courseId] - s_purchasedPlacesToCounter[courseId];
         uint256[] memory ids = new uint256[](1);
         uint256[] memory values = new uint256[](1);
         ids[0] = courseId;
@@ -248,15 +249,17 @@ contract Course is ERC1155, AccessControl {
         }
     }
 
+    /**
+     * Funds management
+     */
     function withdraw() public payable onlyRole(ADMIN) {
         (bool succ,) = payable(_msgSender()).call{value: address(this).balance}(""); //change owner
         if (!succ) revert Courses_WithdrawalFailed(); //todo transfer ownership
     }
 
-    function uri(uint256 _tokenid) public view override returns (string memory) {
-        return s_uris[_tokenid];
-    }
-
+    /**
+     * Utils
+     */
     function setData(uint256[] memory courseIds, uint256[] memory values, string[] memory uri, uint256[] memory fees)
         private
         onlyRole(ADMIN)
@@ -264,10 +267,11 @@ contract Course is ERC1155, AccessControl {
         //check same length
         // todo make another Struct with uri, fees, owner
         if (courseIds.length != uri.length) revert Courses_SetCoursesUris_ParamsLengthDoNotMatch(); //add  fees
+        s_coursesTypeCounter += values.length;
         for (uint256 i = 0; i < courseIds.length; i++) {
             uint256 courseId = courseIds[i];
-            s_createdPlacesToCounter[courseId] += values[i];
-            s_uris[courseId] = uri[i];
+            s_placesToCounter[courseId] += values[i];
+            s_courseToUri[courseId] = uri[i];
             s_courseToFee[courseId] = fees[i];
             s_courseToCreator[courseId] = _msgSender();
         }
@@ -278,32 +282,17 @@ contract Course is ERC1155, AccessControl {
         // todo make another Struct with uri, fees, owner
         if (courseId.length != values.length) revert Courses_SetCoursesUris_ParamsLengthDoNotMatch(); //add  fees
         for (uint256 i = 0; i < values.length; i++) {
-            s_createdPlacesToCounter[courseId[i]] -= values[i];
+            s_placesToCounter[courseId[i]] -= values[i];
         }
-    }
-
-    function setCertificateUri(uint256 courseId, string memory uri) public onlyRole(ADMIN) {
-        s_uris[courseId] = uri;
-    }
-
-    function getCourseUri(uint256 courseId) public returns (string memory) {
-        return s_uris[0];
     }
 
     function contractURI() public pure returns (string memory) {
         return string.concat(PROTOCOL, URI_PINATA, "/collection.json");
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC1155, AccessControl)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
+    /**
+     * Getters
+     */
     function getEvaluators(uint256 courseId)
         public
         view
@@ -354,20 +343,12 @@ contract Course is ERC1155, AccessControl {
         return (promoted, failed, countPromoted, countFailed);
     }
 
-    function setUri(string memory uri) public onlyRole(ADMIN) {
-        _setURI(uri);
-    }
-
-    function _setURI(string memory newuri) internal override {
-        super._setURI(newuri);
-    }
-
     function getCoursesCounter() public view returns (uint256) {
         return s_coursesTypeCounter;
     }
 
     function getCreatedPlacesCounter(uint256 courseId) public view returns (uint256) {
-        return s_createdPlacesToCounter[courseId];
+        return s_placesToCounter[courseId];
     }
 
     function getPurchasedPlacesCounter(uint256 courseId) public view returns (uint256) {
@@ -376,11 +357,6 @@ contract Course is ERC1155, AccessControl {
 
     function getEvaluatedStudents(uint256 courseId) public view returns (uint256) {
         return s_courseToEvaluatedStudents[courseId].length;
-    }
-
-    function setMaxEvaluatorsAmount(uint256 newAmount) public {
-        if (newAmount == 0) revert Course_setMaxEvaluatorsAmountCannotBeZero(newAmount);
-        s_maxEvaluatorsAmount = newAmount;
     }
 
     function getMaxEvaluatorsPerCourse() public view returns (uint256) {
@@ -393,5 +369,58 @@ contract Course is ERC1155, AccessControl {
 
     function getCourseCreator(uint256 courseId) public view returns (address) {
         return s_courseToCreator[courseId];
+    }
+
+    function getCourseUri(uint256 courseId) public returns (string memory) {
+        return s_courseToUri[courseId];
+    }
+
+    /**
+     * Setters
+     */
+    function setUri(string memory uri) public onlyRole(ADMIN) {
+        _setURI(uri);
+    }
+
+    function _setURI(string memory newuri) internal override {
+        super._setURI(newuri);
+    }
+
+    function setMaxEvaluatorsAmount(uint256 newAmount) public {
+        if (newAmount == 0) revert Course_setMaxEvaluatorsAmountCannotBeZero(newAmount);
+        s_maxEvaluatorsAmount = newAmount;
+    }
+
+    function setCertificateUri(uint256 courseId, string memory uri) public onlyRole(ADMIN) {
+        s_courseToUri[courseId] = uri;
+    }
+
+    /**
+     * Overrides
+     */
+    function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes memory data)
+        public
+        override
+        onlyRole(ADMIN)
+    {
+        super.safeTransferFrom(from, to, id, value, data);
+    }
+
+    function uri(uint256 _tokenid) public view override returns (string memory) {
+        return s_courseToUri[_tokenid];
+    }
+
+    function setApprovalForAll(address operator, bool approved) public override onlyRole(ADMIN) {
+        super.setApprovalForAll(operator, approved);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }

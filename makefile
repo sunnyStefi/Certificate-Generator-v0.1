@@ -59,5 +59,5 @@ all: createCourses setUpEvaluator buyPlaces  transferNFT evaluate  makeCertifica
 
 push:
 	git add .
-	git commit -m "readme"
+	git commit -m "function ordering"
 	git push origin main
