@@ -45,27 +45,27 @@ contract CourseTest is Test {
         courses.setUpEvaluator(EVE, 0);
     }
 
-    function buyCoursesUtils() private {
+    function buyPlacesUtils() private {
         vm.prank(BOB);
-        courses.buyCourse{value: VALUE_001}(0);
+        courses.buyPlace{value: VALUE_001}(0);
         vm.prank(CARL);
-        courses.buyCourse{value: VALUE_001}(0);
+        courses.buyPlace{value: VALUE_001}(0);
         vm.prank(DAVID);
-        courses.buyCourse{value: VALUE_001}(0);
+        courses.buyPlace{value: VALUE_001}(0);
     }
 
-    function buyCourseAndTransferNFTUtils() private {
+    function buyPlaceAndTransferNFTUtils() private {
         vm.prank(BOB);
-        courses.buyCourse{value: VALUE_001}(0);
+        courses.buyPlace{value: VALUE_001}(0);
         vm.prank(ALICE);
-        courses.transferCourseNFT(BOB, 0);
+        courses.transferPlaceNFT(BOB, 0);
     }
 
     function transferNFTsUtils() private {
         vm.startPrank(ALICE);
-        courses.transferCourseNFT(BOB, 0);
-        courses.transferCourseNFT(CARL, 0);
-        courses.transferCourseNFT(DAVID, 0);
+        courses.transferPlaceNFT(BOB, 0);
+        courses.transferPlaceNFT(CARL, 0);
+        courses.transferPlaceNFT(DAVID, 0);
         vm.stopPrank();
     }
 

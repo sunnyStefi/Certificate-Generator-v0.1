@@ -25,11 +25,6 @@ gas:
 snap:
 	forge snapshot --asc
 
-push:
-	git add .
-	git commit -m "unit tests"
-	git push origin main
-
 deploy: 
 	sudo rm -rf broadcast && sudo rm -rf cache
 	@forge script script/Deployment.s.sol:Deployment $(SEPOLIA_ARGS)
@@ -48,7 +43,7 @@ createCourses:
 setUpEvaluator:
 	forge script script/Interaction.s.sol:SetUpEvaluator $(SEPOLIA_ARGS)
 
-buyCourses:
+buyPlaces:
 	forge script script/Interaction.s.sol:BuyCourses $(SEPOLIA_ARGS)
 
 transferNFT:
@@ -60,4 +55,9 @@ evaluate:
 makeCertificates:
 	forge script script/Interaction.s.sol:MakeCertificates $(SEPOLIA_ARGS)
 
-all: createCourses setUpEvaluator buyCourses  transferNFT evaluate  makeCertificates
+all: createCourses setUpEvaluator buyPlaces  transferNFT evaluate  makeCertificates
+
+push:
+	git add .
+	git commit -m "readme"
+	git push origin main

@@ -44,13 +44,31 @@ contract CourseTest is Test {
         assert(balanceOfCourse1 == 1);
     }
 
+    function test_createCourses_createMorePlacesForSameCourses() public {
+        createCoursesUtils();
+        createCoursesUtils();
+        uint256 balanceOfCourse0 = courses.balanceOf(address(ALICE), 0);
+        assert(balanceOfCourse0 == 14);
+        assert(courses.getCreatedPlacesCounter(1) == 2);
+        assert(courses.getCourseCreator(0) == ALICE);
+    }
+
     function test_setUpEvaluator() public {
+        createCoursesUtils();
         setUpEvaluatorUtils();
         address[] memory evaluators = courses.getEvaluators(0);
         assert(evaluators[0] == EVE);
     }
 
+    function test_setUpEvaluator_Fails_CoursesNotCreated() public {
+        vm.startPrank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(Course.Course_CourseIdDoesNotExist.selector, 0));
+        courses.setUpEvaluator(EVE, 0);
+        vm.stopPrank();
+    }
+
     function test_setUpEvaluator_Fails_AlreadyAssignedForThisCourse() public {
+        createCoursesUtils();
         setUpEvaluatorUtils();
         vm.startPrank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(Course.Course_EvaluatorAlreadyAssignedForThisCourse.selector, EVE));
@@ -58,7 +76,35 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
+    function test_setUpEvaluator_Fails_CourseIdDoesNotExist() public {
+        vm.startPrank(ALICE);
+        vm.expectRevert(abi.encodeWithSelector(Course.Course_CourseIdDoesNotExist.selector, 74543));
+        courses.setUpEvaluator(EVE, 74543);
+        vm.stopPrank();
+    }
+
+    function test_removeEvaluator() public {
+        createCoursesUtils();
+        setUpEvaluatorUtils();
+        removeEvaluatorUtils();
+        uint256 actualEvaluators = courses.getEvaluatorsPerCourse(0);
+        assertEq(actualEvaluators, 0);
+    }
+
+    function test_removedEvaluatorCannotEvaluate() public {
+        createCoursesUtils();
+        setUpEvaluatorUtils();
+        removeEvaluatorUtils();
+        buyPlacesUtils();
+        transferNFTsUtils();
+        vm.startPrank(EVE);
+        vm.expectRevert(abi.encodeWithSelector(Course.Course_EvaluatorNotAssignedToCourse.selector, 0, EVE));
+        courses.evaluate(0, BOB, 8);
+        vm.stopPrank();
+    }
+
     function test_setUpEvaluator_Fails_TooManyEvaluatorsForThisCourse() public {
+        createCoursesUtils();
         vm.startPrank(ALICE);
         courses.setUpEvaluator(ALICE, 0);
         courses.setUpEvaluator(BOB, 0);
@@ -91,7 +137,7 @@ contract CourseTest is Test {
     function test_oneStudentBuysACourse() public {
         createCoursesUtils();
         vm.prank(BOB);
-        courses.buyCourse{value: VALUE_001}(0);
+        courses.buyPlace{value: VALUE_001}(0);
         address[] memory students = courses.getCourseToEnrolledStudents(0);
         assert(students[0] == BOB);
         assert(address(courses).balance == VALUE_001);
@@ -100,7 +146,7 @@ contract CourseTest is Test {
 
     function test_allStudentsBuyACourse() public {
         createCoursesUtils();
-        buyCoursesUtils();
+        buyPlacesUtils();
         address[] memory students = courses.getCourseToEnrolledStudents(0);
         assert(students[0] == BOB);
         assert(address(courses).balance == VALUE_001 * 3);
@@ -110,7 +156,7 @@ contract CourseTest is Test {
     function test_studentOwnsCourseNFT() public {
         assert(courses.balanceOf(BOB, 0) == 0);
         createCoursesUtils();
-        buyCourseAndTransferNFTUtils();
+        buyPlaceAndTransferNFTUtils();
         assert(courses.balanceOf(ALICE, 0) == 6);
         assert(courses.balanceOf(BOB, 0) == 1);
     }
@@ -118,7 +164,7 @@ contract CourseTest is Test {
     function test_studentCannotTransferNFTAround() public {
         assert(courses.balanceOf(BOB, 0) == 0);
         createCoursesUtils();
-        buyCourseAndTransferNFTUtils();
+        buyPlaceAndTransferNFTUtils();
         vm.startPrank(DAVID);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, DAVID, ADMIN));
         courses.setApprovalForAll(BOB, true);
@@ -129,6 +175,20 @@ contract CourseTest is Test {
         vm.stopPrank();
         assert(courses.balanceOf(BOB, 0) == 1);
         assert(courses.balanceOf(DAVID, 0) == 0);
+    }
+
+    function test_evaluation_Fails_ValidEvaluatorButNotAssignedToCourse() public {
+        createCoursesUtils();
+        vm.startPrank(ALICE);
+        courses.setUpEvaluator(EVE, 0);
+        courses.setUpEvaluator(FRANK, 1);
+        vm.stopPrank();
+        buyPlacesUtils();
+        transferNFTsUtils();
+        vm.startPrank(FRANK);
+        vm.expectRevert(abi.encodeWithSelector(Course.Course_EvaluatorNotAssignedToCourse.selector, 0, FRANK));
+        courses.evaluate(0, BOB, 6);
+        vm.stopPrank();
     }
 
     function test_beforeMakeCertificates_storageVariables() public {
@@ -162,14 +222,14 @@ contract CourseTest is Test {
         makeCertificatesUtils();
         assert(courses.balanceOf(BOB, 0) == 1);
         vm.prank(ALICE);
-        courses.burn(BOB, 0, 1);
+        courses.removePlaces(BOB, 0, 1);
         assert(courses.balanceOf(BOB, 0) == 0);
     }
 
     function evaluations() private {
         createCoursesUtils();
         setUpEvaluatorUtils();
-        buyCoursesUtils();
+        buyPlacesUtils();
         transferNFTsUtils();
         evaluateUtils();
     }
@@ -180,7 +240,7 @@ contract CourseTest is Test {
     function test_mintNFTandEvaluate() public {
         createCoursesUtils();
         setUpEvaluatorUtils();
-        buyCoursesUtils();
+        buyPlacesUtils();
         transferNFTsUtils();
         evaluateUtils();
         assert(courses.getCourseToEvaluateStudents(0).length == 3);
@@ -189,7 +249,7 @@ contract CourseTest is Test {
     function test_makeCertificates() public {
         createCoursesUtils();
         setUpEvaluatorUtils();
-        buyCoursesUtils();
+        buyPlacesUtils();
         transferNFTsUtils();
         evaluateUtils();
         vm.prank(ALICE);
@@ -213,35 +273,40 @@ contract CourseTest is Test {
         courses.setUpEvaluator(EVE, 0);
     }
 
-    function buyCoursesUtils() private {
-        vm.prank(BOB);
-        courses.buyCourse{value: VALUE_001}(0);
-        vm.prank(CARL);
-        courses.buyCourse{value: VALUE_001}(0);
-        vm.prank(DAVID);
-        courses.buyCourse{value: VALUE_001}(0);
+    function removeEvaluatorUtils() private {
+        vm.prank(ALICE);
+        courses.removeEvaluator(EVE, 0);
     }
 
-    function buyCourseAndTransferNFTUtils() private {
+    function buyPlacesUtils() private {
         vm.prank(BOB);
-        courses.buyCourse{value: VALUE_001}(0);
+        courses.buyPlace{value: VALUE_001}(0);
+        vm.prank(CARL);
+        courses.buyPlace{value: VALUE_001}(0);
+        vm.prank(DAVID);
+        courses.buyPlace{value: VALUE_001}(0);
+    }
+
+    function buyPlaceAndTransferNFTUtils() private {
+        vm.prank(BOB);
+        courses.buyPlace{value: VALUE_001}(0);
         vm.prank(ALICE);
-        courses.transferCourseNFT(BOB, 0);
+        courses.transferPlaceNFT(BOB, 0);
     }
 
     function transferNFTsUtils() private {
         vm.startPrank(ALICE);
-        courses.transferCourseNFT(BOB, 0);
-        courses.transferCourseNFT(CARL, 0);
-        courses.transferCourseNFT(DAVID, 0);
+        courses.transferPlaceNFT(BOB, 0);
+        courses.transferPlaceNFT(CARL, 0);
+        courses.transferPlaceNFT(DAVID, 0);
         vm.stopPrank();
     }
 
     function evaluateUtils() private {
         vm.startPrank(EVE);
-        bool evaluation1 = courses.evaluate(0, BOB, 6);
-        bool evaluation2 = courses.evaluate(0, CARL, 4);
-        bool evaluation3 = courses.evaluate(0, DAVID, 8);
+        courses.evaluate(0, BOB, 6);
+        courses.evaluate(0, CARL, 4);
+        courses.evaluate(0, DAVID, 8);
         vm.stopPrank();
     }
 
@@ -256,6 +321,6 @@ contract CourseTest is Test {
         ids[0] = 0;
         values[0] = 4;
         vm.prank(ALICE);
-        courses.removeCourses(ids, values);
+        courses.removePlaces(ids, values);
     }
 }

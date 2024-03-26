@@ -33,6 +33,9 @@ contract Course is ERC1155, AccessControl {
     error Course_EvaluatorAlreadyAssignedForThisCourse(address evaluator);
     error Course_TooManyEvaluatorsForThisCourse(uint256 maxEvaluatorsAmount);
     error Course_setMaxEvaluatorsAmountCannotBeZero(uint256 newAmount);
+    error Course_EvaluatorNotAssignedToCourse(uint256 course, address evaluator);
+    error Course_CourseIdDoesNotExist(uint256 courseId);
+    error Course_EvaluatorNotAssignedForThisCourse(address evaluator);
 
     uint256 public constant BASE_COURSE_FEE = 0.01 ether;
     string public constant JSON = ".json";
@@ -49,7 +52,7 @@ contract Course is ERC1155, AccessControl {
     mapping(uint256 => uint256) private s_purchasedPlacesToCounter;
     mapping(uint256 => uint256) private s_courseToPassedUsers;
     mapping(uint256 => string) private s_uris; // each course has an uri that points to its metadata
-    mapping(uint256 => address) private s_courseToOwner;
+    mapping(uint256 => address) private s_courseToCreator;
     mapping(uint256 => address[]) private s_courseToEnrolledStudents;
     mapping(address => uint256[]) private s_userToCourses;
     mapping(uint256 => EvaluatedStudent[]) private s_courseToEvaluatedStudents;
@@ -63,6 +66,20 @@ contract Course is ERC1155, AccessControl {
 
     modifier validateMark(uint256 mark) {
         if (mark < 1 || mark > 10) revert Course_IllegalMark(mark);
+        _;
+    }
+
+    modifier onlyIfCourseIdExists(uint256 courseId) {
+        if (s_courseToCreator[courseId] == address(0)) {
+            revert Course_CourseIdDoesNotExist(courseId);
+        }
+        _;
+    }
+
+    modifier onlyAssignedEvaluator(uint256 courseId, address evaluator) {
+        if (!s_courseToEvaluators[courseId].contains(evaluator)) {
+            revert Course_EvaluatorNotAssignedToCourse(courseId, evaluator);
+        }
         _;
     }
 
@@ -88,13 +105,16 @@ contract Course is ERC1155, AccessControl {
         s_coursesTypeCounter += values.length;
         setData(ids, values, uris, fees);
         _mintBatch(_msgSender(), ids, values, data);
-        //approve their transfer for later // can we costumise this? e.g they cannot move it around
         setApprovalForAll(_msgSender(), true);
         emit Courses_CoursesCreated(s_coursesTypeCounter);
-        return 2;
+        return ids.length;
     }
 
-    function setUpEvaluator(address evaluator, uint256 courseId) public onlyRole(ADMIN) {
+    function setUpEvaluator(address evaluator, uint256 courseId)
+        public
+        onlyRole(ADMIN)
+        onlyIfCourseIdExists(courseId)
+    {
         if (s_courseToEvaluators[courseId].contains(evaluator)) {
             revert Course_EvaluatorAlreadyAssignedForThisCourse(evaluator);
         }
@@ -107,7 +127,19 @@ contract Course is ERC1155, AccessControl {
         emit Courses_EvaluatorSetUp(evaluator);
     }
 
-    function removeCourses(
+    function removeEvaluator(address evaluator, uint256 courseId)
+        public
+        onlyRole(ADMIN)
+        onlyIfCourseIdExists(courseId)
+    {
+        if (!s_courseToEvaluators[courseId].contains(evaluator)) {
+            revert Course_EvaluatorNotAssignedForThisCourse(evaluator);
+        }
+        s_courseToEvaluators[courseId].remove(evaluator);
+        grantRole(EVALUATOR, evaluator);
+    }
+
+    function removePlaces(
         uint256[] memory ids,
         uint256[] memory values //remove from
     ) public onlyRole(ADMIN) {
@@ -128,7 +160,7 @@ contract Course is ERC1155, AccessControl {
         return s_createdPlacesToCounter[id] -= 1;
     }
 
-    function burn(
+    function removePlaces(
         address from,
         uint256 id,
         uint256 value //remove from
@@ -138,7 +170,7 @@ contract Course is ERC1155, AccessControl {
         emit Courses_CoursesRemoved(value);
     }
 
-    function buyCourse(uint256 courseId) public payable returns (bool) {
+    function buyPlace(uint256 courseId) public payable returns (bool) {
         //todo exceptions do not add replicated courses
         if (msg.value < s_courseToFee[courseId]) {
             revert Course_BuyCourse_NotEnoughEthToBuyCourse(s_courseToFee[courseId], msg.value);
@@ -149,28 +181,22 @@ contract Course is ERC1155, AccessControl {
     }
     //todo return bool even above
 
-    function transferCourseNFT(address student, uint256 courseId) public onlyRole(ADMIN) returns (bool) {
+    function transferPlaceNFT(address student, uint256 courseId) public onlyRole(ADMIN) returns (bool) {
         //this can be initialized only by the owner of the NFT --> cannot put inside buycourse
-        safeTransferFrom(s_courseToOwner[courseId], student, courseId, 1, "0x");
+        safeTransferFrom(s_courseToCreator[courseId], student, courseId, 1, "0x");
     }
 
-    // function transferCoursesCertificate(address from, address to){}  //
-
-    // function _update(address from, address to, uint256[] memory ids, uint256[] memory values) internal override {
-    //     if (_msgSender() == owner() || to == address(0)) revert Courses_TokenCannotBeTransferedOnlyBurned();
-    //     super._update(from, to, ids, values);
-    // }
-
-    //todo evaluate many
     function evaluate(uint256 courseId, address student, uint256 mark)
         public
         onlyRole(EVALUATOR)
         validateMark(mark)
+        onlyAssignedEvaluator(courseId, _msgSender())
         returns (bool)
     {
         //TODO evaluated only if it has NFT!
         //TODO validate the course for the student
         //TODO do not evaluate 2 times for each course-student
+
         uint256[] memory user_courses = s_userToCourses[student];
         bool valid_match = false;
         if (user_courses.length == 0) revert Courses_NoCourseIsRegisteredForTheUser(student);
@@ -211,7 +237,7 @@ contract Course is ERC1155, AccessControl {
         uint256[] memory values = new uint256[](1);
         ids[0] = courseId;
         values[0] = notSoldCourses;
-        removeCourses(ids, values);
+        removePlaces(ids, values);
 
         for (uint256 i = 0; i < evaluatedStudents; i++) {
             if (s_courseToEvaluatedStudents[courseId][i].mark < 6) {
@@ -231,18 +257,19 @@ contract Course is ERC1155, AccessControl {
         return s_uris[_tokenid];
     }
 
-    function setData(uint256[] memory courseId, uint256[] memory values, string[] memory uri, uint256[] memory fees)
+    function setData(uint256[] memory courseIds, uint256[] memory values, string[] memory uri, uint256[] memory fees)
         private
         onlyRole(ADMIN)
     {
         //check same length
         // todo make another Struct with uri, fees, owner
-        if (courseId.length != uri.length) revert Courses_SetCoursesUris_ParamsLengthDoNotMatch(); //add  fees
-        for (uint256 i = 0; i < s_coursesTypeCounter; i++) {
-            s_createdPlacesToCounter[courseId[i]] += values[i];
-            s_uris[courseId[i]] = uri[i];
-            s_courseToFee[courseId[i]] = fees[i];
-            s_courseToOwner[courseId[i]] = _msgSender();
+        if (courseIds.length != uri.length) revert Courses_SetCoursesUris_ParamsLengthDoNotMatch(); //add  fees
+        for (uint256 i = 0; i < courseIds.length; i++) {
+            uint256 courseId = courseIds[i];
+            s_createdPlacesToCounter[courseId] += values[i];
+            s_uris[courseId] = uri[i];
+            s_courseToFee[courseId] = fees[i];
+            s_courseToCreator[courseId] = _msgSender();
         }
     }
 
@@ -277,7 +304,12 @@ contract Course is ERC1155, AccessControl {
         return super.supportsInterface(interfaceId);
     }
 
-    function getEvaluators(uint256 courseId) public view returns (address[] memory evaluators) {
+    function getEvaluators(uint256 courseId)
+        public
+        view
+        onlyIfCourseIdExists(courseId)
+        returns (address[] memory evaluators)
+    {
         return s_courseToEvaluators[courseId].values();
     }
 
@@ -357,5 +389,9 @@ contract Course is ERC1155, AccessControl {
 
     function getEvaluatorsPerCourse(uint256 courseId) public view returns (uint256) {
         return s_courseToEvaluators[courseId].length();
+    }
+
+    function getCourseCreator(uint256 courseId) public view returns (address) {
+        return s_courseToCreator[courseId];
     }
 }

@@ -65,15 +65,15 @@ contract BuyCourses is Script {
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
 
         if (block.chainid == 11155111) {
-            buyCourse(vm.envUint("PRIVATE_KEY_BOB"), mostRecentlyDeployed);
-            buyCourse(vm.envUint("PRIVATE_KEY_CARL"), mostRecentlyDeployed);
-            buyCourse(vm.envUint("PRIVATE_KEY_DAVID"), mostRecentlyDeployed);
+            buyPlace(vm.envUint("PRIVATE_KEY_BOB"), mostRecentlyDeployed);
+            buyPlace(vm.envUint("PRIVATE_KEY_CARL"), mostRecentlyDeployed);
+            buyPlace(vm.envUint("PRIVATE_KEY_DAVID"), mostRecentlyDeployed);
         }
     }
 
-    function buyCourse(uint256 broadcasterKey, address mostRecentlyDeployed) private {
+    function buyPlace(uint256 broadcasterKey, address mostRecentlyDeployed) private {
         vm.startBroadcast(broadcasterKey);
-        Course(mostRecentlyDeployed).buyCourse{value: VALUE_001}(0);
+        Course(mostRecentlyDeployed).buyPlace{value: VALUE_001}(0);
         vm.stopBroadcast();
     }
 }
@@ -92,9 +92,9 @@ contract TransferNFT is Script {
         address BOB = address(0xf015f6a767167b3f21e03D93b475c26D32DCc399);
         address CARL = address(0x0B65fbabA12AACFD7c2CE17f9cbcCf82bc7a4236);
         address DAVID = address(0xF4D3a3461708F7D6DE47Da423851e3a2807eDaAD);
-        Course(mostRecentlyDeployed).transferCourseNFT(BOB, 0);
-        Course(mostRecentlyDeployed).transferCourseNFT(CARL, 0);
-        Course(mostRecentlyDeployed).transferCourseNFT(DAVID, 0);
+        Course(mostRecentlyDeployed).transferPlaceNFT(BOB, 0);
+        Course(mostRecentlyDeployed).transferPlaceNFT(CARL, 0);
+        Course(mostRecentlyDeployed).transferPlaceNFT(DAVID, 0);
         vm.stopBroadcast();
     }
 }
@@ -152,7 +152,7 @@ contract RemoveAll is Script {
         ids[1] = 1; //advanced math course
         values[0] = 2;
         values[1] = 0;
-        Course(mostRecentlyDeployed).removeCourses(ids, values);
+        Course(mostRecentlyDeployed).removePlaces(ids, values);
         vm.stopBroadcast();
     }
 }
