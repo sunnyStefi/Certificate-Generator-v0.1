@@ -213,7 +213,7 @@ contract CourseTest is Test {
         assert(courses.getCreatedPlacesCounter(0) == 3);
         assert(courses.balanceOf(CARL, 0) == 1);
         vm.prank(ALICE);
-        courses.removeFailedStudentPlaces(CARL, 0, 1);
+        courses.removePlaces(CARL, 0, 1);
         assert(courses.balanceOf(CARL, 0) == 0);
     }
 
