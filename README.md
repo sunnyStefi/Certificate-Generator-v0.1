@@ -7,10 +7,10 @@ After that specific date, each Course NFT token can either
 1. become a Course and it can be transferred to the Student's account only if he's been given a mark greater than 6 out of 10
 2. it will be burned if the Student has not passed the exam
 
-<img src="/img/general.png"  width="400">
-<img src="/img/part_1.png" width="400">
-<img src="/img/part_2.png"  width="400">
-<img src="/img/part_3.png" width="400">
+![Timelapse](/img/general.png){width=400px}
+![Timelapse](/img/part_1.png){width=400px}
+![Timelapse](/img/part_2.png){width=400px}
+![Timelapse](/img/part_3.png){width=400px}
 
 ## Foundry
 
