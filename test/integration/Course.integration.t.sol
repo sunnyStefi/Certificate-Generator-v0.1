@@ -71,9 +71,9 @@ contract CourseTest is Test {
 
     function evaluateUtils() private {
         vm.startPrank(EVE);
-        bool evaluation1 = courses.evaluate(0, BOB, 6);
-        bool evaluation2 = courses.evaluate(0, CARL, 4);
-        bool evaluation3 = courses.evaluate(0, DAVID, 8);
+        courses.evaluate(0, BOB, 6);
+        courses.evaluate(0, CARL, 4);
+        courses.evaluate(0, DAVID, 8);
         vm.stopPrank();
     }
 }

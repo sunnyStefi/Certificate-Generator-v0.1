@@ -88,7 +88,7 @@ contract CourseTest is Test {
         setUpEvaluatorUtils();
         removeEvaluatorUtils();
         uint256 actualEvaluators = courses.getEvaluatorsPerCourse(0);
-        assertEq(actualEvaluators, 0);
+        assertEq(actualEvaluators, 1);
     }
 
     function test_removedEvaluatorCannotEvaluate() public {
@@ -98,7 +98,9 @@ contract CourseTest is Test {
         buyPlacesUtils();
         transferNFTsUtils();
         vm.startPrank(EVE);
-        vm.expectRevert(abi.encodeWithSelector(Course.Course_EvaluatorNotAssignedToCourse.selector, 0, EVE));
+        vm.expectRevert(
+            abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, EVE, EVALUATOR)
+        );
         courses.evaluate(0, BOB, 8);
         vm.stopPrank();
     }
@@ -136,6 +138,7 @@ contract CourseTest is Test {
 
     function test_oneStudentBuysACourse() public {
         createCoursesUtils();
+        setUpEvaluatorUtils();
         vm.prank(BOB);
         courses.buyPlace{value: VALUE_001}(0);
         address[] memory students = courses.getCourseToEnrolledStudents(0);
@@ -146,6 +149,7 @@ contract CourseTest is Test {
 
     function test_allStudentsBuyACourse() public {
         createCoursesUtils();
+        setUpEvaluatorUtils();
         buyPlacesUtils();
         address[] memory students = courses.getCourseToEnrolledStudents(0);
         assert(students[0] == BOB);
@@ -156,6 +160,7 @@ contract CourseTest is Test {
     function test_studentOwnsCourseNFT() public {
         assert(courses.balanceOf(BOB, 0) == 0);
         createCoursesUtils();
+        setUpEvaluatorUtils();
         buyPlaceAndTransferNFTUtils();
         assert(courses.balanceOf(ALICE, 0) == 6);
         assert(courses.balanceOf(BOB, 0) == 1);
@@ -164,6 +169,7 @@ contract CourseTest is Test {
     function test_studentCannotTransferNFTAround() public {
         assert(courses.balanceOf(BOB, 0) == 0);
         createCoursesUtils();
+        setUpEvaluatorUtils();
         buyPlaceAndTransferNFTUtils();
         vm.startPrank(DAVID);
         vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, DAVID, ADMIN));
@@ -269,8 +275,10 @@ contract CourseTest is Test {
     }
 
     function setUpEvaluatorUtils() private {
-        vm.prank(ALICE);
+        vm.startPrank(ALICE);
         courses.setUpEvaluator(EVE, 0);
+        courses.setUpEvaluator(FRANK, 0);
+        vm.stopPrank();
     }
 
     function removeEvaluatorUtils() private {

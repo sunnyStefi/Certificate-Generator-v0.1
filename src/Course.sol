@@ -37,6 +37,10 @@ contract Course is ERC1155, AccessControl {
     error Course_EvaluatorNotAssignedToCourse(uint256 course, address evaluator);
     error Course_CourseIdDoesNotExist(uint256 courseId);
     error Course_EvaluatorNotAssignedForThisCourse(address evaluator);
+    error Course_StudentCannotBeEvaluator(address student);
+    error Course_DoesNotHaveExactlyOnePlaceNFT(address student, uint256 balance);
+    error Course_StudentNotEnrolled(address student);
+    error Course_StudentAlreadyEvaluated(address student);
 
     uint256 public constant BASE_COURSE_FEE = 0.01 ether;
     string public constant JSON = ".json";
@@ -197,28 +201,27 @@ contract Course is ERC1155, AccessControl {
         onlyRole(EVALUATOR)
         validateMark(mark)
         onlyAssignedEvaluator(courseId, _msgSender())
-        returns (bool)
     {
-        //TODO evaluated only if it has NFT!
-        //TODO validate the course for the student
-        //TODO do not evaluate 2 times for each course-student
-
-        uint256[] memory user_courses = s_userToCourses[student];
-        bool valid_match = false;
-        if (user_courses.length == 0) revert Courses_NoCourseIsRegisteredForTheUser(student);
-        uint256 i = 0;
-        while (i < user_courses.length) {
-            if (user_courses[i] == courseId) {
-                s_courseToEvaluatedStudents[i].push(EvaluatedStudent(mark, block.timestamp, student, _msgSender()));
-                valid_match = true;
-                break;
-            }
-            i++;
+        if (s_courses[courseId].evaluators.contains(student)) { //todo make tests
+            revert Course_StudentCannotBeEvaluator(student);
         }
-        if (mark > 6) s_courses[courseId].passedStudents += 1;
-        if (!valid_match) revert Courses_CourseNotRegisteredForTheUser(courseId, student);
+        if (!s_courses[courseId].enrolledStudents.contains(student)) {
+            revert Course_StudentNotEnrolled(student);
+        }
+        if (isStudentEvaluated(courseId, student)) {
+            revert Course_StudentAlreadyEvaluated(student);
+        }
+        if (this.balanceOf(student, courseId) != 1) {
+            revert Course_DoesNotHaveExactlyOnePlaceNFT(student, this.balanceOf(student, courseId));
+        }
+        if (s_userToCourses[student].length == 0) {
+            revert Courses_NoCourseIsRegisteredForTheUser(student);
+        }
+        if (mark >= 6) {
+            s_courses[courseId].passedStudents += 1;
+        }
+        s_courseToEvaluatedStudents[courseId].push(EvaluatedStudent(mark, block.timestamp, student, _msgSender()));
         emit Courses_EvaluationCompleted(courseId, student, mark);
-        return valid_match;
     }
 
     /**
@@ -288,6 +291,15 @@ contract Course is ERC1155, AccessControl {
 
     function contractURI() public pure returns (string memory) {
         return string.concat(PROTOCOL, URI_PINATA, "/collection.json");
+    }
+
+    function isStudentEvaluated(uint256 courseId, address student) public view returns (bool) {
+        for (uint256 i = 0; i < s_courseToEvaluatedStudents[courseId].length; i++) {
+            if (s_courseToEvaluatedStudents[courseId][i].student == student) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

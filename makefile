@@ -59,5 +59,5 @@ all: createCourses setUpEvaluator buyPlaces  transferNFT evaluate  makeCertifica
 
 push:
 	git add .
-	git commit -m "course add struct"
+	git commit -m "course evaluation reverts"
 	git push origin main
