@@ -1,16 +1,19 @@
-## Dynamic 1155 NFT - Course Certificate Generator
+## Course Certificate Generator - Dynamic NFT - ERC1155
 
-Each User can buy a Course NFT token, which will enable him to become a Learning Student.
-An exam will take place in real life by one Evaluator in a specific date.
-After that specific date, each Course NFT token can either
+Fullstack application that simulates a real world certificate-issuer institution.
 
-1. become a Certificate and it can be transfered to the Student's account only if he's been given a mark greater than 6 out of 10
-2. it will be burned if the Student has not passed the exam
+**Process and Schemas**
 
-![Timelapse](/img/general.png){width=400px}
-![Timelapse](/img/part_1.png){width=400px}
-![Timelapse](/img/part_2.png){width=400px}
-![Timelapse](/img/part_4.png){width=400px}
+An _User_ can buy a Place NFT token, which will enable him to become an _Enrolled Student_ of a Course. An examination will take place in real life and one listed Evaluator will register the mark in a specific date.
+After that moment, the admin will either:
+
+1. create Certificates that can be transfered to the Promoted Student's account
+2. burn unsold or failed Places
+
+![Timelapse](/img/general.png)
+![Timelapse](/img/part_1.png)
+![Timelapse](/img/part_2.png)
+![Timelapse](/img/part_3.png)
 
 ## Foundry
 
