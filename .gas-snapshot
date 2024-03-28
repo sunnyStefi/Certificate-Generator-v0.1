@@ -1,7 +1,7 @@
 CourseTest:test_allStudentsBuyACourse() (gas: 974766)
 CourseTest:test_createCourses() (gas: 752662)
 CourseTest:test_getCourseUri() (gas: 753904)
-CourseTest:test_makeCertificates() (gas: 1368766)
+CourseTest:test_makeCourses() (gas: 1368766)
 CourseTest:test_mintNFTandEvaluate() (gas: 1462814)
 CourseTest:test_oneStudentBuysACourse() (gas: 858489)
 CourseTest:test_setUpEvaluator() (gas: 89040)

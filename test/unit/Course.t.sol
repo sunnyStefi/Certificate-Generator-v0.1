@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-// import {Certificates} from "../../src/Certificates.sol";
+// import {Courses} from "../../src/Courses.sol";
 import {Course} from "../../src/Course.sol";
 import {Deployment} from "../../script/Deployment.s.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
@@ -43,15 +43,6 @@ contract CourseTest is Test {
         uint256 balanceOfCourse1 = courses.balanceOf(address(ALICE), 1);
         assert(balanceOfCourse0 == 7);
         assert(balanceOfCourse1 == 1);
-    }
-
-    function test_createCourses_createMorePlacesForSameCourses() public {
-        createCoursesUtils();
-        createCoursesUtils();
-        uint256 balanceOfCourse0 = courses.balanceOf(address(ALICE), 0);
-        assert(balanceOfCourse0 == 14);
-        assert(courses.getCreatedPlacesCounter(1) == 2);
-        assert(courses.getCourseCreator(0) == ALICE);
     }
 
     function test_setUpEvaluator() public {
@@ -210,14 +201,14 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-    function test_makeCertificates_removeUnsoldCourses() public {
+    function test_makeCourses_removeUnsoldCourses() public {
         evaluationsUtils();
         removeUnsoldCoursesUtils();
         assert(courses.getCreatedPlacesCounter(0) == 3);
         assert(courses.getEvaluatedStudents(0) == 3);
     }
 
-    function test_makeCertificates_removeFailedStudentPlaces() public {
+    function test_makeCourses_removeFailedStudentPlaces() public {
         evaluationsUtils();
         removeUnsoldCoursesUtils();
         assert(courses.getCreatedPlacesCounter(0) == 3);
@@ -227,9 +218,9 @@ contract CourseTest is Test {
         assert(courses.balanceOf(CARL, 0) == 0);
     }
 
-    function test_cannotRemoveCertificatesForPromotedStudents() public {
+    function test_cannotRemoveCoursesForPromotedStudents() public {
         evaluationsUtils();
-        makeCertificatesUtils();
+        makeCoursesUtils();
         assert(courses.balanceOf(BOB, 0) == 1);
         vm.prank(ALICE);
         courses.removePlaces(BOB, 0, 1);
@@ -256,14 +247,14 @@ contract CourseTest is Test {
         assert(courses.getCourseToEvaluateStudents(0).length == 3);
     }
 
-    function test_makeCertificates() public {
+    function test_makeCourses() public {
         createCoursesUtils();
         setUpEvaluatorUtils();
         buyPlacesUtils();
         transferNFTsUtils();
         evaluateUtils();
         vm.prank(ALICE);
-        courses.makeCertificates(0, "newUri");
+        courses.makeCourses(0, "newUri");
         assert(courses.balanceOf(BOB, 0) == 1);
         assert(courses.balanceOf(CARL, 0) == 0);
         assert(courses.balanceOf(DAVID, 0) == 1);
@@ -347,9 +338,9 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-    function makeCertificatesUtils() private {
+    function makeCoursesUtils() private {
         vm.prank(ALICE);
-        courses.makeCertificates(0, "newUri");
+        courses.makeCourses(0, "newUri");
     }
 
     function removeUnsoldCoursesUtils() private {
@@ -357,6 +348,24 @@ contract CourseTest is Test {
         uint256[] memory values = new uint256[](1);
         ids[0] = 0;
         values[0] = courses.getCreatedPlacesCounter(0) - courses.getPurchasedPlacesCounter(0);
+        vm.prank(ALICE);
+        courses.removePlaces(ids, values);
+    }
+
+    function removePlaceUtils() private {
+        uint256[] memory ids = new uint256[](1);
+        uint256[] memory values = new uint256[](1);
+        ids[0] = 0;
+        values[0] = 1;
+        vm.prank(ALICE);
+        courses.removePlaces(ids, values);
+    }
+
+    function removePlacesUtils() private {
+        uint256[] memory ids = new uint256[](1);
+        uint256[] memory values = new uint256[](1);
+        ids[0] = 0;
+        values[0] = 10;
         vm.prank(ALICE);
         courses.removePlaces(ids, values);
     }

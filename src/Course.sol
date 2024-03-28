@@ -43,6 +43,7 @@ contract Course is ERC1155, AccessControl {
     error Course_StudentNotEnrolled(address student);
     error Course_StudentAlreadyEvaluated(address student);
     error Courses_NotEnoughFunds(uint256 amount, uint256 balance);
+    error Course_TooManyPlacesForThisCourse(uint256 actualPlaces, uint256 desiredPlaces);
 
     uint256 public constant BASE_COURSE_FEE = 0.01 ether;
     string public constant JSON = ".json";
@@ -229,7 +230,7 @@ contract Course is ERC1155, AccessControl {
     /**
      * Make certificates
      */
-    function makeCertificates(uint256 courseId, string memory certificateUri)
+    function makeCourses(uint256 courseId, string memory certificateUri)
         public
         onlyRole(ADMIN)
         validateCourseId(courseId)
@@ -246,7 +247,7 @@ contract Course is ERC1155, AccessControl {
             if (s_courseToEvaluatedStudents[courseId][i].mark < 6) {
                 removePlaces(s_courseToEvaluatedStudents[courseId][i].student, courseId, 1);
             } else {
-                setCertificateUri(courseId, certificateUri);
+                setCourseUri(courseId, certificateUri);
             }
         }
     }
@@ -292,9 +293,13 @@ contract Course is ERC1155, AccessControl {
         if (courseIds.length != values.length) {
             revert Courses_SetCoursesUris_ParamsLengthDoNotMatch();
         }
+
         for (uint256 i = 0; i < values.length; i++) {
             if (s_courses[courseIds[i]].creator == address(0)) {
                 revert Course_CourseIdDoesNotExist(courseIds[i]);
+            }
+            if (s_courses[courseIds[i]].placeNumber < values[i]) {
+                revert Course_TooManyPlacesForThisCourse(s_courses[courseIds[i]].placeNumber, values[i]);
             }
             s_courses[courseIds[i]].placeNumber -= values[i];
         }
@@ -424,7 +429,7 @@ contract Course is ERC1155, AccessControl {
         s_maxEvaluatorsAmount = newAmount;
     }
 
-    function setCertificateUri(uint256 courseId, string memory uri) public onlyRole(ADMIN) {
+    function setCourseUri(uint256 courseId, string memory uri) public onlyRole(ADMIN) {
         s_courses[courseId].uri = uri;
     }
 

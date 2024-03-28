@@ -120,7 +120,7 @@ contract Evaluate is Script {
     }
 }
 
-contract MakeCertificates is Script {
+contract MakeCourses is Script {
     string newUri = "https://ipfs.io/ipfs/QmcbWTvWMBoRwvJdXUDjuaRXD5w6BKxTeUe3vNZ6Hm4zg6/0_success.json";
     uint256 deployerKey;
 
@@ -131,7 +131,7 @@ contract MakeCertificates is Script {
             deployerKey = vm.envUint("PRIVATE_KEY");
         }
         vm.startBroadcast(deployerKey);
-        Course(mostRecentlyDeployed).makeCertificates(0, newUri);
+        Course(mostRecentlyDeployed).makeCourses(0, newUri);
         vm.stopBroadcast();
     }
 }
