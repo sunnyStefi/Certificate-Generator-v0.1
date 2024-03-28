@@ -16,6 +16,7 @@ contract CourseTest is Test {
     Course public courses;
     CreateCourses public createCourses;
     uint256 VALUE_001 = 0.01 ether;
+    uint256 BASE_BALANCE = 1 ether;
     address public ALICE = makeAddr("alice"); // DEPLOYER
     address public BOB = makeAddr("bob"); //STUDENT 1
     address public CARL = makeAddr("carl"); //STUDENT  2
@@ -29,11 +30,11 @@ contract CourseTest is Test {
     function setUp() public {
         deployer = new Deployment();
         (courses, createCourses) = deployer.run();
-        vm.deal(ALICE, 1 ether); //ADMIN
-        vm.deal(BOB, 1 ether); //STUDENT PASSED 1
-        vm.deal(CARL, 1 ether); //STUDENT PASSED 2
-        vm.deal(DAVID, 1 ether); //STUDENT FAILED 1
-        vm.deal(EVE, 1 ether); //EVALUATOR
+        vm.deal(ALICE, BASE_BALANCE); //ADMIN
+        vm.deal(BOB, BASE_BALANCE); //STUDENT PASSED 1
+        vm.deal(CARL, BASE_BALANCE); //STUDENT PASSED 2
+        vm.deal(DAVID, BASE_BALANCE); //STUDENT FAILED 1
+        vm.deal(EVE, BASE_BALANCE); //EVALUATOR
     }
 
     function test_createCourses() public {
@@ -183,6 +184,18 @@ contract CourseTest is Test {
         assert(courses.balanceOf(DAVID, 0) == 0);
     }
 
+    function test_evaluations() public {
+        evaluationsUtils();
+        assert(courses.getCreatedPlacesCounter(0) == 7);
+        assert(courses.getPurchasedPlacesCounter(0) == 3);
+        (,, uint256 promoted, uint256 failed) = courses.getPromotedStudents(0);
+        assert(promoted == 2);
+        assert(failed == 1);
+        assert(courses.getPassedStudents(0) == 2);
+    }
+
+    //evaluation conditions tests here..
+
     function test_evaluation_Fails_ValidEvaluatorButNotAssignedToCourse() public {
         createCoursesUtils();
         vm.startPrank(ALICE);
@@ -197,24 +210,15 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-    function test_beforeMakeCertificates_storageVariables() public {
-        evaluations();
-        assert(courses.getCreatedPlacesCounter(0) == 7);
-        assert(courses.getPurchasedPlacesCounter(0) == 3);
-        (,, uint256 promoted, uint256 failed) = courses.getPromotedStudents(0);
-        assert(promoted == 2);
-        assert(failed == 1);
-    }
-
-    function test_beforeMakeCertificate_canRemoveUnsoldCourses() public {
-        evaluations();
+    function test_makeCertificates_removeUnsoldCourses() public {
+        evaluationsUtils();
         removeUnsoldCoursesUtils();
         assert(courses.getCreatedPlacesCounter(0) == 3);
         assert(courses.getEvaluatedStudents(0) == 3);
     }
 
-    function test_beforeMakeCertificate_removeFailedStudentPlaces() public {
-        evaluations();
+    function test_makeCertificates_removeFailedStudentPlaces() public {
+        evaluationsUtils();
         removeUnsoldCoursesUtils();
         assert(courses.getCreatedPlacesCounter(0) == 3);
         assert(courses.balanceOf(CARL, 0) == 1);
@@ -224,7 +228,7 @@ contract CourseTest is Test {
     }
 
     function test_cannotRemoveCertificatesForPromotedStudents() public {
-        evaluations();
+        evaluationsUtils();
         makeCertificatesUtils();
         assert(courses.balanceOf(BOB, 0) == 1);
         vm.prank(ALICE);
@@ -232,7 +236,7 @@ contract CourseTest is Test {
         assert(courses.balanceOf(BOB, 0) == 0);
     }
 
-    function evaluations() private {
+    function evaluationsUtils() private {
         createCoursesUtils();
         setUpEvaluatorUtils();
         buyPlacesUtils();
@@ -264,6 +268,31 @@ contract CourseTest is Test {
         assert(courses.balanceOf(CARL, 0) == 0);
         assert(courses.balanceOf(DAVID, 0) == 1);
         assert(keccak256(abi.encodePacked(courses.uri(0))) == keccak256(abi.encodePacked("newUri")));
+    }
+
+    function test_withdraw() public {
+        createCoursesUtils();
+        setUpEvaluatorUtils();
+        buyPlacesUtils();
+        vm.startPrank(ALICE);
+        assert(address(courses).balance == VALUE_001 * 3);
+        assert(address(ALICE).balance == BASE_BALANCE);
+        courses.withdraw(VALUE_001);
+        vm.stopPrank();
+        assert(address(courses).balance == VALUE_001 * 2);
+        assert(address(ALICE).balance == BASE_BALANCE + VALUE_001);
+    }
+
+    function test_withdrawFailsExceededFundsAmount() public {
+        createCoursesUtils();
+        setUpEvaluatorUtils();
+        buyPlacesUtils();
+        vm.startPrank(ALICE);
+        assert(address(courses).balance == VALUE_001 * 3);
+        assert(address(ALICE).balance == BASE_BALANCE);
+        vm.expectRevert(abi.encodeWithSelector(Course.Courses_NotEnoughFunds.selector, VALUE_001 * 4, VALUE_001 * 3));
+        courses.withdraw(VALUE_001 * 4);
+        vm.stopPrank();
     }
 
     function createCoursesUtils() private {
@@ -327,7 +356,7 @@ contract CourseTest is Test {
         uint256[] memory ids = new uint256[](1);
         uint256[] memory values = new uint256[](1);
         ids[0] = 0;
-        values[0] = 4;
+        values[0] = courses.getCreatedPlacesCounter(0) - courses.getPurchasedPlacesCounter(0);
         vm.prank(ALICE);
         courses.removePlaces(ids, values);
     }
