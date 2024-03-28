@@ -4,10 +4,10 @@ Fullstack application that simulates a real world certificate-issuer institution
 
 **Process and Schemas**
 
-An _User_ can buy a Place NFT token, which will enable him to become an _Enrolled Student_ of a Course. An examination will take place in real life and one listed Evaluator will register the mark in a specific date.
+An _User_ can buy a Place NFT token, which will enable him to become an _Enrolled Student_ for that particular Course. An examination will take place in real life and one listed Evaluator will register the mark in a specific date.
 After that moment, the admin will either:
 
-1. create Certificates that can be transfered to the Promoted Student's account
+1. convert the Places to Certificates that will remain inside the Promoted Student's accounts
 2. burn unsold or failed Places
 
 ![Timelapse](/img/general.png)

@@ -65,7 +65,8 @@ contract CourseTest is Test {
      * 1. Combine functions in the wrong order and expect a result
      *      e.g. evaluate student before it has received the place NFT ec.
      * 2. Call the same function in a correct order multiple times
-     * 3. Mixing point 1 and 2
+     * 3. Mixing Actions point 1 and 2
+     * 4. Mixing Users interactions (e.g. same student will purchase differnt courses..)
      */
     function createCoursesUtils() private {
         vm.startPrank(ALICE);
