@@ -52,12 +52,12 @@ transferNFT:
 evaluate:
 	forge script script/Interaction.s.sol:Evaluate $(SEPOLIA_ARGS)
 
-makeCourses:
-	forge script script/Interaction.s.sol:MakeCourses $(SEPOLIA_ARGS)
+makeCertificates:
+	forge script script/Interaction.s.sol:makeCertificates $(SEPOLIA_ARGS)
 
-all: createCourses setUpEvaluator buyPlaces  transferNFT evaluate  makeCourses
+all: createCourses setUpEvaluator buyPlaces  transferNFT evaluate  makeCertificates
 
 push:
 	git add .
-	git commit -m "readme"
+	git commit -m "fuzz tests, refactoring createCourses"
 	git push origin main

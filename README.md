@@ -15,9 +15,20 @@ After that moment, the admin will either:
 ![Timelapse](/img/part_2.png)
 ![Timelapse](/img/part_3.png)
 
-## Foundry
 
-ERC1155
+## Recommendations
+
+Use multi-sig wallet such as [Safe](https://app.safe.global/)
+Monitor with its own [Forta bot]()
+
+## Security Threat Model
+
+[Rekt-test](https://blog.trailofbits.com/2023/08/14/can-you-pass-the-rekt-test/) ✅
+
+## Frameworks
+
+Foundry
+Openzeppelin ERC1155, AccessControl,
 Opensea
 
 ### Prerequisites

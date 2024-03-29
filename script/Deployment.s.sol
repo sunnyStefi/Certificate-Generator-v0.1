@@ -9,21 +9,19 @@ import {CreateCourses} from "./Interaction.s.sol";
 contract Deployment is Script {
     uint256 deployerKey;
     uint256 aliceKey;
-    CreateCourses createCourses;
 
     function setUp() public {}
 
-    function run() external returns (Course, CreateCourses) {
+    function run() external returns (Course) {
         (, aliceKey) = makeAddrAndKey("alice");
         if (block.chainid == 11155111) {
             vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         }
         if (block.chainid == 31337) {
             vm.startBroadcast(aliceKey); //Deploy utils contract for testing
-            createCourses = new CreateCourses();
         }
         Course university = new Course();
         vm.stopBroadcast();
-        return (university, createCourses);
+        return (university);
     }
 }

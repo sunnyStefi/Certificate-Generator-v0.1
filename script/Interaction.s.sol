@@ -19,25 +19,17 @@ contract CreateCourses is Script {
     function run() external {
         (, aliceKey) = makeAddrAndKey("alice");
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
-        setUpCreate();
         if (block.chainid == 11155111) {
             deployerKey = vm.envUint("PRIVATE_KEY");
         }
         vm.startBroadcast(deployerKey);
-        Course(mostRecentlyDeployed).createCourses(ids, values, "", testUri, fees);
+        Course(mostRecentlyDeployed).createCourse(
+            0, 7, "", "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/0.json", VALUE_001
+        );
+        Course(mostRecentlyDeployed).createCourse(
+            1, 1, "", "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/1.json", VALUE_001
+        );
         vm.stopBroadcast();
-    }
-
-    function setUpCreate() public returns (uint256[] memory, uint256[] memory, string[] memory, uint256[] memory) {
-        ids[0] = 0; //basic math course
-        ids[1] = 1; //advanced math course
-        values[0] = 7;
-        values[1] = 1;
-        testUri[0] = "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/0.json";
-        testUri[1] = "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/1.json";
-        fees[0] = VALUE_001;
-        fees[1] = VALUE_001;
-        return (ids, values, testUri, fees);
     }
 }
 
@@ -120,7 +112,7 @@ contract Evaluate is Script {
     }
 }
 
-contract MakeCourses is Script {
+contract makeCertificates is Script {
     string newUri = "https://ipfs.io/ipfs/QmcbWTvWMBoRwvJdXUDjuaRXD5w6BKxTeUe3vNZ6Hm4zg6/0_success.json";
     uint256 deployerKey;
 
@@ -131,7 +123,7 @@ contract MakeCourses is Script {
             deployerKey = vm.envUint("PRIVATE_KEY");
         }
         vm.startBroadcast(deployerKey);
-        Course(mostRecentlyDeployed).makeCourses(0, newUri);
+        Course(mostRecentlyDeployed).makeCertificates(0, newUri);
         vm.stopBroadcast();
     }
 }
@@ -146,13 +138,8 @@ contract RemoveAll is Script {
             deployerKey = vm.envUint("PRIVATE_KEY");
         }
         vm.startBroadcast(deployerKey);
-        uint256[] memory ids = new uint256[](2);
-        uint256[] memory values = new uint256[](2);
-        ids[0] = 0; //basic math course
-        ids[1] = 1; //advanced math course
-        values[0] = 2;
-        values[1] = 0;
-        Course(mostRecentlyDeployed).removePlaces(ids, values);
+        Course(mostRecentlyDeployed).removePlaces(msg.sender, 0, 7);
+        Course(mostRecentlyDeployed).removePlaces(msg.sender, 1, 1);
         vm.stopBroadcast();
     }
 }
