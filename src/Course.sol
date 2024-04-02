@@ -211,6 +211,9 @@ contract Course is ERC1155, AccessControl {
         if (!s_courses[courseId].enrolledStudents.contains(student)) {
             revert Courses_CourseNotRegisteredForTheUser(courseId, student);
         }
+        if (s_courses[courseId].evaluators.contains(student)) {
+            revert Course_EvaluatorCannotBeStudent();
+        }
 
         safeTransferFrom(s_courses[courseId].creator, student, courseId, 1, "0x");
     }
@@ -436,6 +439,13 @@ contract Course is ERC1155, AccessControl {
         return s_placesPurchasedCounter;
     }
 
+    function isStudentEnrolled(address student, uint256 courseId) public view returns (bool) {
+        return s_courses[courseId].enrolledStudents.contains(student);
+    }
+
+    function isCourseCertified(uint256 courseId) public view returns(bool){
+        return s_courses[courseId].certified;
+    }
     /**
      * Setters
      */

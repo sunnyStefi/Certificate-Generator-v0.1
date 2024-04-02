@@ -58,9 +58,8 @@ contract MockedCourse is Test {
     }
 
     function removePlaces(address from, uint256 id, uint256 value) public validInput(id, value) {
-        if (from != address(0)) {
-            courseFactory.removePlaces(from, id, value);
-        }
+        vm.assume(from != address(0));
+        courseFactory.removePlaces(from, id, value);
     }
 
     function setUpEvaluator(address evaluator, uint256 id)
@@ -83,11 +82,25 @@ contract MockedCourse is Test {
         courseFactory.removeEvaluator(evaluator, id);
     }
 
-    function buyPlace(uint256 courseId) public {
-        if (courseFactory.getCourseCreator(courseId) != address(0)) {
-            courseFactory.buyPlace(courseId);
-        }
+    function buyPlace(uint256 id) public validInputId(id) {
+        vm.assume(courseFactory.getCourseCreator(id) != address(0));
+        courseFactory.buyPlace(id);
     }
 
-    //tod.. more fuzzing here, specify detailed conditions
+    function transferPlaceNFT(address student, uint256 id) public onlyAdmin validInputId(id) {
+        vm.assume(courseFactory.isStudentEnrolled(student, id));
+        courseFactory.transferPlaceNFT(student, id);
+    }
+
+    function evaluate(uint256 courseId, address student, uint256 mark) public validInputId(courseId) {
+        uint256 boundedMark = bound(mark, 1, 10);
+        vm.assume(courseFactory.getIsEvaluatorsAssignedToCourse(msg.sender, courseId));
+        vm.assume(courseFactory.balanceOf(student, courseId) == 1);
+        courseFactory.evaluate(courseId, student, boundedMark);
+    }
+
+    function makeCertificates(uint256 courseId, string memory certificateUri) public onlyAdmin validInputId(courseId) {
+        vm.assume(!courseFactory.isCourseCertified(courseId));
+        courseFactory.makeCertificates(courseId, certificateUri);
+    }
 }
