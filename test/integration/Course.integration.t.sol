@@ -78,8 +78,7 @@ contract CourseTest is Test {
         vm.startPrank(ALICE);
         if (courseId >= MAX_UINT || value >= MAX_UINT) {
             // first revert expected (input)
-            vm.expectRevert(abi.encodeWithSelector(Course.Course_CourseIdExceedsMaxUint256Value.selector));
-            console.log("here");
+            vm.expectRevert(Course.Course_CourseIdExceedsMaxUint256Value.selector);
             courseFactory.createCourse(courseId, value, "0x", "", VALUE_001);
         } else {
             // second revert expected (overflow internal sum)

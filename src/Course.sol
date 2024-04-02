@@ -42,6 +42,9 @@ contract Course is ERC1155, AccessControl {
     error Course_CourseIdExceedsMaxUint256Value();
     error Course_MaxPlacesPerCourseReached();
     error Course_StudentCannotBuyMoreThanOnePlace();
+    error Course_CannotCertifyTheCourseTwice();
+    error Course_CourseNotCreated();
+    error Course_EvaluatorCannotBeStudent();
 
     uint256 public constant BASE_COURSE_FEE = 0.01 ether;
     uint256 public constant MAX_UINT = type(uint256).max;
@@ -51,6 +54,8 @@ contract Course is ERC1155, AccessControl {
     string public constant URI_PINATA = "QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF";
 
     uint256 private s_coursesTypeCounter;
+    uint256 private s_placesPurchasedCounter;
+    uint256 private s_certificatesCounter;
     uint256 private MAX_EVALUATORS = 5;
     uint256 private MAX_PLACES_PER_COURSE = 100;
 
@@ -59,6 +64,7 @@ contract Course is ERC1155, AccessControl {
     mapping(uint256 => EvaluatedStudent[]) private s_courseToEvaluatedStudents;
 
     struct CourseStruct {
+        bool certified;
         uint256 placeFee;
         uint256 placeNumber;
         uint256 placesPurchased;
@@ -97,6 +103,17 @@ contract Course is ERC1155, AccessControl {
         _;
     }
 
+    modifier courseExists(uint256 courseId) {
+        if (s_courses[courseId].creator == address(0)) {
+            revert Course_CourseNotCreated();
+        }
+        if (courseId >= MAX_UINT) {
+            revert Course_CourseIdExceedsMaxUint256Value();
+        }
+
+        _;
+    }
+
     constructor() ERC1155(string.concat(PROTOCOL, URI_PINATA, ID_JSON)) {
         _setRoleAdmin(ADMIN, ADMIN);
         _setRoleAdmin(EVALUATOR, ADMIN);
@@ -124,12 +141,7 @@ contract Course is ERC1155, AccessControl {
         return id;
     }
 
-    function removePlaces(address from, uint256 id, uint256 value)
-        public
-        onlyRole(ADMIN)
-        validateAmount(id)
-        validateAmount(value)
-    {
+    function removePlaces(address from, uint256 id, uint256 value) public onlyRole(ADMIN) validateAmount(value) {
         removePlaceData(id, value);
         _burn(from, id, value);
         emit Courses_CoursesRemoved(value);
@@ -142,7 +154,7 @@ contract Course is ERC1155, AccessControl {
         public
         onlyRole(ADMIN)
         validateAddress(evaluator)
-        validateAmount(courseId)
+        courseExists(courseId)
     {
         if (s_courses[courseId].evaluators.contains(evaluator)) {
             revert Course_EvaluatorAlreadyAssignedForThisCourse(evaluator);
@@ -151,11 +163,12 @@ contract Course is ERC1155, AccessControl {
         if (s_courses[courseId].evaluators.length() > (MAX_EVALUATORS - 1)) {
             revert Course_TooManyEvaluatorsForThisCourse(MAX_EVALUATORS);
         }
+
         s_courses[courseId].evaluators.add(evaluator);
         grantRole(EVALUATOR, evaluator);
     }
 
-    function removeEvaluator(address evaluator, uint256 courseId) public onlyRole(ADMIN) validateAmount(courseId) {
+    function removeEvaluator(address evaluator, uint256 courseId) public onlyRole(ADMIN) courseExists(courseId) {
         if (!s_courses[courseId].evaluators.contains(evaluator)) {
             revert Course_EvaluatorNotAssignedForThisCourse(evaluator);
         }
@@ -166,8 +179,10 @@ contract Course is ERC1155, AccessControl {
     /**
      * 3 Purchase
      */
-    function buyPlace(uint256 courseId) public payable validateAmount(courseId) {
-        //todo cant buy a course twice replicated courses
+    function buyPlace(uint256 courseId) public payable validateAmount(courseId) courseExists(courseId) {
+        if (s_courses[courseId].placeNumber + 1 >= MAX_PLACES_PER_COURSE) {
+            revert Course_MaxPlacesPerCourseReached();
+        }
         if (msg.value < s_courses[courseId].placeFee) {
             revert Course_BuyCourse_NotEnoughEthToBuyCourse(s_courses[courseId].placeFee, msg.value);
         }
@@ -177,17 +192,21 @@ contract Course is ERC1155, AccessControl {
         if (s_courses[courseId].enrolledStudents.contains(_msgSender())) {
             revert Course_StudentCannotBuyMoreThanOnePlace();
         }
+        if (s_courses[courseId].evaluators.contains(_msgSender())) {
+            revert Course_EvaluatorCannotBeStudent();
+        }
         s_userToCourses[_msgSender()].push(courseId);
         s_courses[courseId].placesPurchased += 1;
         s_courses[courseId].enrolledStudents.add(_msgSender());
+        s_placesPurchasedCounter += 1;
     }
 
     //todo return values
     function transferPlaceNFT(address student, uint256 courseId)
         public
         onlyRole(ADMIN)
-        validateAmount(courseId)
         validateAddress(student)
+        courseExists(courseId)
     {
         if (!s_courses[courseId].enrolledStudents.contains(student)) {
             revert Courses_CourseNotRegisteredForTheUser(courseId, student);
@@ -202,9 +221,9 @@ contract Course is ERC1155, AccessControl {
     function evaluate(uint256 courseId, address student, uint256 mark)
         public
         onlyRole(EVALUATOR)
-        validateAmount(courseId)
         validateAddress(student)
         validateMark(mark)
+        courseExists(courseId)
     {
         if (!s_courses[courseId].evaluators.contains(_msgSender())) {
             revert Course_EvaluatorNotAssignedToCourse(courseId, _msgSender());
@@ -237,11 +256,16 @@ contract Course is ERC1155, AccessControl {
     function makeCertificates(uint256 courseId, string memory certificateUri)
         public
         onlyRole(ADMIN)
-        validateAmount(courseId)
+        courseExists(courseId)
     {
+        if (s_courses[courseId].certified) {
+            revert Course_CannotCertifyTheCourseTwice();
+        }
+        s_certificatesCounter += 1;
+        s_courses[courseId].certified = true;
+
         uint256 evaluatedStudents = s_courseToEvaluatedStudents[courseId].length;
         uint256 notSoldPlaces = s_courses[courseId].placeNumber - s_courses[courseId].placesPurchased;
-
         removePlaces(_msgSender(), courseId, notSoldPlaces);
 
         for (uint256 i = 0; i < evaluatedStudents; i++) {
@@ -388,6 +412,10 @@ contract Course is ERC1155, AccessControl {
         return s_courses[courseId].evaluators.length();
     }
 
+    function getIsEvaluatorsAssignedToCourse(address evaluator, uint256 courseId) public view returns (bool) {
+        return s_courses[courseId].evaluators.contains(evaluator);
+    }
+
     function getCourseCreator(uint256 courseId) public view returns (address) {
         return s_courses[courseId].creator;
     }
@@ -398,6 +426,14 @@ contract Course is ERC1155, AccessControl {
 
     function getPassedStudents(uint256 courseId) public view returns (uint256) {
         return s_courses[courseId].passedStudents;
+    }
+
+    function getCertificatesCounter() public view returns (uint256) {
+        return s_certificatesCounter;
+    }
+
+    function getPlacesPurchased() public view returns (uint256) {
+        return s_placesPurchasedCounter;
     }
 
     /**

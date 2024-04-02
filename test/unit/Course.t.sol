@@ -55,10 +55,13 @@ contract CourseTest is Test {
     function test_setUpEvaluator_Fails_CoursesNotCreated(address rand_evaluator, uint256 rand_courseId) public {
         vm.startPrank(ALICE);
         if (rand_evaluator == address(0)) {
-            vm.expectRevert(abi.encodeWithSelector(Course.Course_AddressNotValid.selector));
+            vm.expectRevert(Course.Course_AddressNotValid.selector);
         }
-        if (rand_courseId >= MAX_UINT) {
-            vm.expectRevert(abi.encodeWithSelector(Course.Course_CourseIdExceedsMaxUint256Value.selector));
+        else if (courseFactory.getCourseCreator(rand_courseId) == address(0)) {
+            vm.expectRevert(Course.Course_CourseNotCreated.selector);
+        }
+        else if (rand_courseId >= MAX_UINT) {
+            vm.expectRevert(Course.Course_CourseIdExceedsMaxUint256Value.selector);
         }
         courseFactory.setUpEvaluator(rand_evaluator, rand_courseId);
         vm.stopPrank();
@@ -259,6 +262,19 @@ contract CourseTest is Test {
         assert(courseFactory.balanceOf(CARL, 0) == 0);
         assert(courseFactory.balanceOf(DAVID, 0) == 1);
         assert(keccak256(abi.encodePacked(courseFactory.uri(0))) == keccak256(abi.encodePacked("newUri")));
+    }
+
+    function test_makeCertificatesFails_CannotMakeTwoCertificatesForSameCourse() public {
+        createCoursesUtils();
+        setUpEvaluatorUtils();
+        buyPlacesUtils();
+        transferNFTsUtils();
+        evaluateUtils();
+        vm.startPrank(ALICE);
+        courseFactory.makeCertificates(0, "newUri");
+        vm.expectRevert(Course.Course_CannotCertifyTheCourseTwice.selector);
+        courseFactory.makeCertificates(0, "anotherUri");
+        vm.stopPrank();
     }
 
     function test_withdraw() public {

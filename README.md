@@ -51,8 +51,10 @@ Opensea
 
 
 ## Invariants / Properties
+Tested inside stateful fuzz testing
+
 ### 1 Course Creation
-1. A course cannot be created more than one time
+1. The total amount of courses must be less or equal than the amount of certificates
 2. Not more than 100 places per course can be created
 3. Only created courses can be removed
 
@@ -79,6 +81,7 @@ Opensea
 17. Only passed student can have a NFT certificate
 18. The NFT of a certificate is different from a place NFT certificate
 19. No NFT are left that hold the old places NFT url
+20. Cannot make a certificate twice
 
 ### 6 Funds management
 19. Funds can always be withdrawn correctly
@@ -86,3 +89,6 @@ Opensea
 ### Generic
 20. Role assignment action: only users with specific actions can perform certain actions
 21. Storage integrity: data is consistent thorughout the contract's execution
+22. Getter view should never revert
+
+Handler-based testing

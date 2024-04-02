@@ -59,8 +59,11 @@ all: createCourses setUpEvaluator buyPlaces  transferNFT evaluate  makeCertifica
 
 coverage:
 	forge coverage --report debug
+
 push:
 	git add .
-	git commit -m "invariants"
+	git commit -m "mocked course, invariants"
 	git push origin main
 
+invariants:
+	forge test --mt invariant  -vvvv
