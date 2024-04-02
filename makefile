@@ -57,7 +57,10 @@ makeCertificates:
 
 all: createCourses setUpEvaluator buyPlaces  transferNFT evaluate  makeCertificates
 
+coverage:
+	forge coverage --report debug
 push:
 	git add .
-	git commit -m "fuzz tests, refactoring createCourses"
+	git commit -m "invariants"
 	git push origin main
+

@@ -19,8 +19,6 @@ contract Course is ERC1155, AccessControl {
     event Courses_CourseCreated(uint256 indexed courseId);
     event Courses_CoursesRemoved(uint256 indexed courseId);
     event Courses_EvaluationCompleted(uint256 indexed courseId, address indexed student, uint256 indexed mark);
-    event Courses_RoleGranted(bytes32 indexed role, address indexed user);
-    event Courses_RoleRevoked(bytes32 indexed role, address indexed user);
     event Courses_Withdrawal(address sender, uint256 amount);
 
     error Course_IllegalMark(uint256 mark);
@@ -100,10 +98,8 @@ contract Course is ERC1155, AccessControl {
     }
 
     constructor() ERC1155(string.concat(PROTOCOL, URI_PINATA, ID_JSON)) {
-        //todo role admin transfer
         _setRoleAdmin(ADMIN, ADMIN);
         _setRoleAdmin(EVALUATOR, ADMIN);
-        _setRoleAdmin(STUDENT, ADMIN);
 
         _grantRole(ADMIN, _msgSender());
         _grantRole(ADMIN, address(this));
@@ -112,7 +108,7 @@ contract Course is ERC1155, AccessControl {
     }
 
     /**
-     * Courses
+     * 1 Courses
      */
     function createCourse(uint256 id, uint256 value, bytes memory data, string memory uri, uint256 fee)
         public
@@ -140,7 +136,7 @@ contract Course is ERC1155, AccessControl {
     }
 
     /**
-     * Evaluator
+     * 2 Evaluator
      */
     function setUpEvaluator(address evaluator, uint256 courseId)
         public
@@ -157,7 +153,6 @@ contract Course is ERC1155, AccessControl {
         }
         s_courses[courseId].evaluators.add(evaluator);
         grantRole(EVALUATOR, evaluator);
-        emit Courses_RoleGranted(EVALUATOR, evaluator);
     }
 
     function removeEvaluator(address evaluator, uint256 courseId) public onlyRole(ADMIN) validateAmount(courseId) {
@@ -166,11 +161,10 @@ contract Course is ERC1155, AccessControl {
         }
         s_courses[courseId].evaluators.remove(evaluator);
         revokeRole(EVALUATOR, evaluator);
-        emit Courses_RoleRevoked(EVALUATOR, evaluator);
     }
 
     /**
-     * Purchase
+     * 3 Purchase
      */
     function buyPlace(uint256 courseId) public payable validateAmount(courseId) {
         //todo cant buy a course twice replicated courses
@@ -203,7 +197,7 @@ contract Course is ERC1155, AccessControl {
     }
 
     /**
-     * Evaluation
+     *  4 Evaluation
      */
     function evaluate(uint256 courseId, address student, uint256 mark)
         public
@@ -238,7 +232,7 @@ contract Course is ERC1155, AccessControl {
     }
 
     /**
-     * Make certificates
+     * 5 Make certificates
      */
     function makeCertificates(uint256 courseId, string memory certificateUri)
         public
@@ -260,7 +254,7 @@ contract Course is ERC1155, AccessControl {
     }
 
     /**
-     * Funds management
+     * 6 Funds management
      */
     function withdraw(uint256 amount) public payable onlyRole(ADMIN) {
         if (amount > address(this).balance) {
