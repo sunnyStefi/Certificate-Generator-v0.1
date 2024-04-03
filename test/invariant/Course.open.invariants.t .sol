@@ -5,7 +5,10 @@ import {Test, console} from "forge-std/Test.sol";
 import {Course} from "../../src/Course.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
 
-//Statefull
+/**
+ * Stateful testing
+ * fail_on_revert = false
+ */
 contract CourseTest is StdInvariant, Test {
     Course public courseFactory;
 

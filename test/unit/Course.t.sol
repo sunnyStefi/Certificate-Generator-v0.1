@@ -45,6 +45,21 @@ contract CourseTest is Test {
         assert(balanceOfCourse1 == 1);
     }
 
+    function test_createCourses_FailsTooManyPlaces1() public {
+        vm.startPrank(ALICE);
+        vm.expectRevert(Course.Course_MaxPlacesPerCourseReached.selector);
+        courseFactory.createCourse(0, 31, "0x", "", VALUE_001);
+        vm.stopPrank();
+    }
+
+    function test_createCourses_FailsTooManyPlaces2() public {
+        vm.startPrank(ALICE);
+        courseFactory.createCourse(0, 30, "0x", "", VALUE_001);
+        vm.expectRevert(Course.Course_MaxPlacesPerCourseReached.selector);
+        courseFactory.createCourse(0, 2, "0x", "", VALUE_001);
+        vm.stopPrank();
+    }
+
     function test_setUpEvaluator() public {
         createCoursesUtils();
         setUpEvaluatorUtils();
@@ -56,12 +71,10 @@ contract CourseTest is Test {
         vm.startPrank(ALICE);
         if (rand_evaluator == address(0)) {
             vm.expectRevert(Course.Course_AddressNotValid.selector);
-        }
-        else if (courseFactory.getCourseCreator(rand_courseId) == address(0)) {
+        } else if (courseFactory.getCourseCreator(rand_courseId) == address(0)) {
             vm.expectRevert(Course.Course_CourseNotCreated.selector);
-        }
-        else if (rand_courseId >= MAX_UINT) {
-            vm.expectRevert(Course.Course_CourseIdExceedsMaxUint256Value.selector);
+        } else if (rand_courseId >= MAX_UINT) {
+            vm.expectRevert(Course.Course_AmountNotValid.selector);
         }
         courseFactory.setUpEvaluator(rand_evaluator, rand_courseId);
         vm.stopPrank();

@@ -39,7 +39,7 @@ contract Course is ERC1155, AccessControl {
     error Course_StudentAlreadyEvaluated(address student);
     error Courses_NotEnoughFunds(uint256 amount, uint256 balance);
     error Course_TooManyPlacesForThisCourse(uint256 actualPlaces, uint256 desiredPlaces);
-    error Course_CourseIdExceedsMaxUint256Value();
+    error Course_AmountNotValid();
     error Course_MaxPlacesPerCourseReached();
     error Course_StudentCannotBuyMoreThanOnePlace();
     error Course_CannotCertifyTheCourseTwice();
@@ -57,7 +57,7 @@ contract Course is ERC1155, AccessControl {
     uint256 private s_placesPurchasedCounter;
     uint256 private s_certificatesCounter;
     uint256 private MAX_EVALUATORS = 5;
-    uint256 private MAX_PLACES_PER_COURSE = 100;
+    uint256 private MAX_PLACES_PER_COURSE = 30;
 
     mapping(uint256 => CourseStruct) private s_courses;
     mapping(address => uint256[]) private s_userToCourses;
@@ -98,7 +98,7 @@ contract Course is ERC1155, AccessControl {
 
     modifier validateAmount(uint256 amount) {
         if (amount >= MAX_UINT) {
-            revert Course_CourseIdExceedsMaxUint256Value();
+            revert Course_AmountNotValid();
         }
         _;
     }
@@ -108,7 +108,7 @@ contract Course is ERC1155, AccessControl {
             revert Course_CourseNotCreated();
         }
         if (courseId >= MAX_UINT) {
-            revert Course_CourseIdExceedsMaxUint256Value();
+            revert Course_AmountNotValid();
         }
 
         _;
@@ -180,7 +180,7 @@ contract Course is ERC1155, AccessControl {
      * 3 Purchase
      */
     function buyPlace(uint256 courseId) public payable validateAmount(courseId) courseExists(courseId) {
-        if (s_courses[courseId].placeNumber + 1 >= MAX_PLACES_PER_COURSE) {
+        if (s_courses[courseId].placesPurchased >= MAX_PLACES_PER_COURSE) {
             revert Course_MaxPlacesPerCourseReached();
         }
         if (msg.value < s_courses[courseId].placeFee) {
@@ -302,7 +302,10 @@ contract Course is ERC1155, AccessControl {
         private
         onlyRole(ADMIN)
     {
-        if (s_courses[courseId].placeNumber + value >= MAX_PLACES_PER_COURSE) {
+        if (value == 0) {
+            revert Course_AmountNotValid();
+        }
+        if (s_courses[courseId].placeNumber + value > MAX_PLACES_PER_COURSE) {
             revert Course_MaxPlacesPerCourseReached();
         }
         s_courses[courseId].placeFee = fee;
@@ -443,12 +446,13 @@ contract Course is ERC1155, AccessControl {
         return s_courses[courseId].enrolledStudents.contains(student);
     }
 
-    function isCourseCertified(uint256 courseId) public view returns(bool){
+    function isCourseCertified(uint256 courseId) public view returns (bool) {
         return s_courses[courseId].certified;
     }
     /**
      * Setters
      */
+
     function setUri(string memory uri) public onlyRole(ADMIN) {
         _setURI(uri);
     }

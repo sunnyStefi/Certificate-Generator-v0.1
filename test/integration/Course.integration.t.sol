@@ -76,18 +76,23 @@ contract CourseTest is Test {
      */
     function test_createCourseFuzz(uint256 courseId, uint256 value) public {
         vm.startPrank(ALICE);
-        if (courseId >= MAX_UINT || value >= MAX_UINT) {
+        uint256 boundedId = bound(courseId, 0, MAX_UINT);
+        uint256 boundedValue = bound(value, 1, MAX_UINT);
+        if (boundedId >= MAX_UINT || boundedValue >= MAX_UINT) {
             // first revert expected (input)
-            vm.expectRevert(Course.Course_CourseIdExceedsMaxUint256Value.selector);
-            courseFactory.createCourse(courseId, value, "0x", "", VALUE_001);
+            vm.expectRevert(Course.Course_AmountNotValid.selector);
+            courseFactory.createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
         } else {
             // second revert expected (overflow internal sum)
-            if ((courseFactory.getCreatedPlacesCounter(courseId) + value) >= courseFactory.getMaxPlacesPerCourse()) {
+            if (
+                (courseFactory.getCreatedPlacesCounter(boundedId) + boundedValue)
+                    > courseFactory.getMaxPlacesPerCourse()
+            ) {
                 vm.expectRevert(abi.encodeWithSelector(Course.Course_MaxPlacesPerCourseReached.selector));
-                courseFactory.createCourse(courseId, value, "0x", "", VALUE_001);
+                courseFactory.createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
             } else {
                 // No revert expected
-                courseFactory.createCourse(courseId, value, "0x", "", VALUE_001);
+                courseFactory.createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
             }
         }
         vm.stopPrank();

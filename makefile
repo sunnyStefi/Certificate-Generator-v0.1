@@ -66,4 +66,4 @@ push:
 	git push origin main
 
 invariants:
-	forge test --mt invariant  -vvvv
+	forge test --mt invariant  -vv
