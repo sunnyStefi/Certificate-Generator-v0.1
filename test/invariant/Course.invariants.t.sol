@@ -39,7 +39,7 @@ contract CourseTestInvariants is StdInvariant, Test {
         assertLe(placesPurchased, MAX_PLACES * coursesCounter);
     }
 
-    function invariant_gettersCannotRevert() public view {
+    function invariant_gettersDoNotRevert() public view {
         courseFactory.getCertificatesCounter();
         //..
     }

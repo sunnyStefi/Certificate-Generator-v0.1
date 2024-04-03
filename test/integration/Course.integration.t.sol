@@ -42,12 +42,6 @@ contract CourseTest is Test {
         assert(courseFactory.getCourseCreator(0) == ALICE);
     }
 
-    // function test_createCoursesAndRemovePlaces(uint256 numberOfCourses, uint256 courseId, uint256 value) public {
-    //     for (uint256 i = 0; i < numberOfCourses; i++) {
-    //         test_createCoursesFuzz(courseId, value);
-    //     }
-    // }
-
     function test_multiplePlacesCreationAddRemoveAdd() public {
         createCoursesUtils();
         removePlacesUtils();

@@ -8,7 +8,7 @@ clean  :; forge clean
 
 remove :; rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
 
-install :; forge install Cyfrin/foundry-devops@0.1.0 --no-commit && forge install foundry-rs/forge-std@v1.5.3 --no-commit && forge install openzeppelin/openzeppelin-contracts@v4.8.3 --no-commit
+install :; forge install Cyfrin/foundry-devops@0.1.0 --no-commit && forge install foundry-rs/forge-std@v1.5.3 --no-commit && forge install && forge install OpenZeppelin/openzeppelin-contracts-upgradeable --no-commit
 
 update:; forge update
 
@@ -62,7 +62,7 @@ coverage:
 
 push:
 	git add .
-	git commit -m "mocked course, invariants"
+	git commit -m "proxy setup"
 	git push origin main
 
 invariants:
