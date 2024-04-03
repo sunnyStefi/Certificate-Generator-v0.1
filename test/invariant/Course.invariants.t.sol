@@ -20,17 +20,22 @@ contract CourseTestInvariants is StdInvariant, Test {
         vm.stopPrank();
     }
 
+    //todo finish mocked course functions
     function invariant_CourseCreation_CoursesLessEqualThanCertificates() public {
-        uint256 courses = courseFactory.getCoursesCounter();
+        uint256 places = courseFactory.getAllPlaces();
         uint256 certificates = courseFactory.getCertificatesCounter();
-        assertLe(courses, certificates);
+        console.log("Places created: ", places);
+        console.log("Certificates created: ", certificates);
+        assertLe(certificates, places);
     }
 
-    function invariant_CourseCreation_PlacesCreatedPerCourseAreLessThanMAX() public {
+    function invariant_CourseCreation_TotalPlacesCreatedAreLessEThanAllowed() public {
         uint256 MAX_PLACES = courseFactory.getMaxPlacesPerCourse();
         uint256 coursesCounter = courseFactory.getCoursesCounter();
-        uint256 placesPurchased = courseFactory.getCertificatesCounter();
-        console.log("Courses created: ", mockedCourse.getGhostCreateCourses());
+        uint256 placesPurchased = courseFactory.getAllPlaces();
+        console.log("Courses created called: ", mockedCourse.getGhostCreateCourses());
+        console.log("Places created: ", placesPurchased);
+        console.log("Total places: ", MAX_PLACES * coursesCounter);
         assertLe(placesPurchased, MAX_PLACES * coursesCounter);
     }
 

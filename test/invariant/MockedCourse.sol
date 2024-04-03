@@ -53,14 +53,15 @@ contract MockedCourse is Test {
 
     function createCourse(uint256 id, uint256 value, bytes memory data, string memory uri, uint256 fee) public {
         uint256 boundedId = bound(id, 1, UINT256_MAX - 1);
+        uint256 boundedValue = bound(value, 1, UINT256_MAX - 1);
         uint256 availablePlaces =
             courseFactory.getMaxPlacesPerCourse() - courseFactory.getCreatedPlacesCounter(boundedId);
-        if (availablePlaces > 0) {
-            vm.startPrank(admin);
-            courseFactory.createCourse(boundedId, availablePlaces, data, uri, 1 ether);
+        uint256 boundedAvailablePlaces = boundedValue % availablePlaces; //returns a number between 0 and availablePlaces
+        if (boundedAvailablePlaces > 0) {
+            vm.prank(admin);
+            courseFactory.createCourse(boundedId, boundedAvailablePlaces, data, uri, 1 ether);
             s_ghost_variable_createCourses++;
             coursesCreated.add(id);
-            vm.stopPrank();
         }
     }
 
@@ -129,6 +130,4 @@ contract MockedCourse is Test {
     function getGhostCreateCourses() public view returns (uint256) {
         return s_ghost_variable_createCourses;
     }
-
-    
 }

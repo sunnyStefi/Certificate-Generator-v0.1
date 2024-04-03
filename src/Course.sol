@@ -11,12 +11,13 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
  */
 contract Course is ERC1155, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     bytes32 public constant ADMIN = keccak256("ADMIN");
     bytes32 public constant EVALUATOR = keccak256("EVALUATOR");
     bytes32 public constant STUDENT = keccak256("STUDENT"); //todo assign
 
-    event Courses_CourseCreated(uint256 indexed courseId);
+    event Courses_CourseCreated();
     event Courses_CoursesRemoved(uint256 indexed courseId);
     event Courses_EvaluationCompleted(uint256 indexed courseId, address indexed student, uint256 indexed mark);
     event Courses_Withdrawal(address sender, uint256 amount);
@@ -53,7 +54,8 @@ contract Course is ERC1155, AccessControl {
     string public constant PROTOCOL = "https://ipfs.io/ipfs/";
     string public constant URI_PINATA = "QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF";
 
-    uint256 private s_coursesTypeCounter;
+    EnumerableSet.UintSet s_coursesTypeCounter;
+    uint256 private s_placesAllCounter;
     uint256 private s_placesPurchasedCounter;
     uint256 private s_certificatesCounter;
     uint256 private MAX_EVALUATORS = 5;
@@ -120,8 +122,6 @@ contract Course is ERC1155, AccessControl {
 
         _grantRole(ADMIN, _msgSender());
         _grantRole(ADMIN, address(this));
-
-        s_coursesTypeCounter = 0;
     }
 
     /**
@@ -137,7 +137,7 @@ contract Course is ERC1155, AccessControl {
         setCoursePlacesData(id, value, uri, fee);
         _mint(_msgSender(), id, value, data);
         setApprovalForAll(_msgSender(), true);
-        emit Courses_CourseCreated(s_coursesTypeCounter);
+        emit Courses_CourseCreated();
         return id;
     }
 
@@ -312,6 +312,8 @@ contract Course is ERC1155, AccessControl {
         s_courses[courseId].placeNumber += value;
         s_courses[courseId].creator = _msgSender();
         s_courses[courseId].uri = uri;
+        s_coursesTypeCounter.add(courseId);
+        s_placesAllCounter += value;
     }
 
     function removePlaceData(uint256 courseId, uint256 value) public onlyRole(ADMIN) {
@@ -391,7 +393,7 @@ contract Course is ERC1155, AccessControl {
     }
 
     function getCoursesCounter() public view returns (uint256) {
-        return s_coursesTypeCounter;
+        return s_coursesTypeCounter.length();
     }
 
     function getCreatedPlacesCounter(uint256 courseId) public view returns (uint256) {
@@ -438,8 +440,12 @@ contract Course is ERC1155, AccessControl {
         return s_certificatesCounter;
     }
 
-    function getPlacesPurchased() public view returns (uint256) {
+    function getAllPlacesPurchased() public view returns (uint256) {
         return s_placesPurchasedCounter;
+    }
+
+    function getAllPlaces() public view returns (uint256) {
+        return s_placesAllCounter;
     }
 
     function isStudentEnrolled(address student, uint256 courseId) public view returns (bool) {
