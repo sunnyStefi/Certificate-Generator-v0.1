@@ -8,6 +8,7 @@ import {Deployment} from "../../script/Deployment.s.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {CreateCourses} from "../../script/Interaction.s.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract CourseTest is Test {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -29,7 +30,7 @@ contract CourseTest is Test {
 
     function setUp() public {
         deployer = new Deployment();
-        courseFactory = deployer.run();
+        courseFactory = Course(payable(deployer.run()));
         vm.deal(ALICE, BASE_BALANCE); //ADMIN
         vm.deal(BOB, BASE_BALANCE); //STUDENT PASSED 1
         vm.deal(CARL, BASE_BALANCE); //STUDENT PASSED 2

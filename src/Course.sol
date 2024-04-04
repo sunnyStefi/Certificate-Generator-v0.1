@@ -64,12 +64,14 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     uint256 private s_placesAllCounter;
     uint256 private s_placesPurchasedCounter;
     uint256 private s_certificatesCounter;
-    uint256 private MAX_EVALUATORS = 5;
-    uint256 private MAX_PLACES_PER_COURSE = 30;
+    uint256 private MAX_EVALUATORS;
+    uint256 private MAX_PLACES_PER_COURSE;
 
     mapping(uint256 => CourseStruct) private s_courses;
     mapping(address => uint256[]) private s_userToCourses;
     mapping(uint256 => EvaluatedStudent[]) private s_courseToEvaluatedStudents;
+
+    uint256[49] __gap;
 
     struct CourseStruct {
         bool certified;
@@ -127,6 +129,7 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     }
 
     function initialize(address defaultAdmin, address upgrader) public initializer {
+        //address defaultAdmin, address upgrader
         __ERC1155_init("");
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -139,6 +142,9 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
         _grantRole(ADMIN, defaultAdmin);
 
         _grantRole(UPGRADER_ROLE, upgrader);
+
+        MAX_EVALUATORS = 5;
+        MAX_PLACES_PER_COURSE = 30;
     }
 
     /**

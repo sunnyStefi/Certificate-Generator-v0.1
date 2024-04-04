@@ -25,7 +25,7 @@ contract CourseTest is Test {
 
     function setUp() public {
         deployer = new Deployment();
-        courseFactory = deployer.run();
+        courseFactory = Course(payable(deployer.run()));
         vm.deal(ALICE, BASE_BALANCE); //ADMIN
         vm.deal(BOB, BASE_BALANCE); //STUDENT PASSED 1
         vm.deal(CARL, BASE_BALANCE); //STUDENT PASSED 2

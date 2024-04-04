@@ -14,7 +14,7 @@ update:; forge update
 
 build:; forge build
 
-SEPOLIA_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+SEPOLIA_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY_ALICE) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
 
 #@ prevents to print the command 
 # mint:
@@ -28,6 +28,13 @@ snap:
 deploy: 
 	sudo rm -rf broadcast && sudo rm -rf cache
 	@forge script script/Deployment.s.sol:Deployment $(SEPOLIA_ARGS)
+
+deploy-anvil:
+	sudo rm -rf broadcast && sudo rm -rf cache
+	@forge script script/Deployment.s.sol:Deployment --fork-url http://localhost:8545 --private-key=$(PRIVATE_KEY_ALICE_ANVIL)  --broadcast -vvvv
+
+upgrade-anvil:
+	@forge script script/Deployment.s.sol:Upgrade --fork-url http://localhost:8545 --private-key=$(PRIVATE_KEY_ALICE_ANVIL)  --broadcast -vvvv
 
 build:
 	forge build --skip script --skip test --skip progress

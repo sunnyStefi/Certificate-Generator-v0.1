@@ -20,7 +20,7 @@ contract CreateCourses is Script {
         (, aliceKey) = makeAddrAndKey("alice");
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY");
+            deployerKey = vm.envUint("PRIVATE_KEY_ALICE");
         }
         vm.startBroadcast(deployerKey);
         Course(mostRecentlyDeployed).createCourse(
@@ -40,10 +40,10 @@ contract SetUpEvaluator is Script {
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
 
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY");
+            deployerKey = vm.envUint("PRIVATE_KEY_ALICE");
         }
         vm.startBroadcast(deployerKey);
-        address EVE = address(0x34Fc21D79de671e5e05Ad7156A663Af8C3702E17);
+        address EVE = vm.envAddress("EVE_ADDRESS");
         Course(mostRecentlyDeployed).setUpEvaluator(EVE, 0);
         vm.stopBroadcast();
     }
@@ -78,12 +78,12 @@ contract TransferNFT is Script {
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
 
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY");
+            deployerKey = vm.envUint("PRIVATE_KEY_ALICE");
         }
         vm.startBroadcast(deployerKey);
-        address BOB = address(0xf015f6a767167b3f21e03D93b475c26D32DCc399);
-        address CARL = address(0x0B65fbabA12AACFD7c2CE17f9cbcCf82bc7a4236);
-        address DAVID = address(0xF4D3a3461708F7D6DE47Da423851e3a2807eDaAD);
+        address BOB = vm.envAddress("BOB_ADDRESS");
+        address CARL = vm.envAddress("CARL_ADDRESS");
+        address DAVID = vm.envAddress("DAVID_ADDRESS");
         Course(mostRecentlyDeployed).transferPlaceNFT(BOB, 0);
         Course(mostRecentlyDeployed).transferPlaceNFT(CARL, 0);
         Course(mostRecentlyDeployed).transferPlaceNFT(DAVID, 0);
@@ -102,9 +102,9 @@ contract Evaluate is Script {
             deployerKey = vm.envUint("PRIVATE_KEY_EVE");
         }
         vm.startBroadcast(deployerKey);
-        address BOB = address(0xf015f6a767167b3f21e03D93b475c26D32DCc399);
-        address CARL = address(0x0B65fbabA12AACFD7c2CE17f9cbcCf82bc7a4236);
-        address DAVID = address(0xF4D3a3461708F7D6DE47Da423851e3a2807eDaAD);
+        address BOB = vm.envAddress("BOB_ADDRESS");
+        address CARL = vm.envAddress("CARL_ADDRESS");
+        address DAVID = vm.envAddress("DAVID_ADDRESS");
         Course(mostRecentlyDeployed).evaluate(0, BOB, 6);
         Course(mostRecentlyDeployed).evaluate(0, CARL, 4);
         Course(mostRecentlyDeployed).evaluate(0, DAVID, 8);
@@ -120,7 +120,7 @@ contract makeCertificates is Script {
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
 
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY");
+            deployerKey = vm.envUint("PRIVATE_KEY_ALICE");
         }
         vm.startBroadcast(deployerKey);
         Course(mostRecentlyDeployed).makeCertificates(0, newUri);
@@ -135,7 +135,7 @@ contract RemoveAll is Script {
         address mostRecentlyDeployed = DevOpsTools.get_most_recent_deployment("Course", block.chainid);
 
         if (block.chainid == 11155111) {
-            deployerKey = vm.envUint("PRIVATE_KEY");
+            deployerKey = vm.envUint("PRIVATE_KEY_ALICE");
         }
         vm.startBroadcast(deployerKey);
         Course(mostRecentlyDeployed).removePlaces(msg.sender, 0, 7);
