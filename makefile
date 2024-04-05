@@ -69,8 +69,11 @@ coverage:
 
 push:
 	git add .
-	git commit -m "proxy setup"
+	git commit -m "proxy upgrade"
 	git push origin main
 
 invariants:
 	forge test --mt invariant  -vv
+
+version-before-upgrade:
+	cast call 0x610178da211fef7d417bc0e6fed39f05609ad788 "getVersion()"

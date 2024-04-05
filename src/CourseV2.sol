@@ -14,7 +14,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 /**
  * @notice This contract govern the creation, transfer and management of certificates.
  */
-contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+contract CourseV2 is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -27,7 +27,6 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     event Courses_CoursesRemoved(uint256 indexed courseId);
     event Courses_EvaluationCompleted(uint256 indexed courseId, address indexed student, uint256 indexed mark);
     event Courses_Withdrawal(address sender, uint256 amount);
-    event Courses_DefaultRolesAssigned(address admin, address upgrader);
 
     error Course_IllegalMark(uint256 mark);
     error Courses_NoCourseIsRegisteredForTheUser(address user);
@@ -67,8 +66,6 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     uint256 private s_certificatesCounter;
     uint256 private MAX_EVALUATORS;
     uint256 private MAX_PLACES_PER_COURSE;
-
-    address private s_defaultAdmin;
 
     mapping(uint256 => CourseStruct) private s_courses;
     mapping(address => uint256[]) private s_userToCourses;
@@ -131,7 +128,8 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
         _disableInitializers();
     }
 
-    function initialize(address defaultAdmin, address upgrader) public initializer {
+    function initializeV2(address defaultAdmin, address upgrader) public reinitializer(2) {
+        //address defaultAdmin, address upgrader
         __ERC1155_init("");
         __AccessControl_init();
         __UUPSUpgradeable_init();
@@ -147,9 +145,6 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
 
         MAX_EVALUATORS = 5;
         MAX_PLACES_PER_COURSE = 30;
-        s_defaultAdmin = defaultAdmin;
-
-        emit Courses_DefaultRolesAssigned(defaultAdmin, upgrader);
     }
 
     /**
@@ -477,7 +472,7 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     }
 
     function getVersion() external pure returns (uint256) {
-        return 1;
+        return 2;
     }
 
     function isStudentEnrolled(address student, uint256 courseId) public view returns (bool) {
@@ -486,10 +481,6 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
 
     function isCourseCertified(uint256 courseId) public view returns (bool) {
         return s_courses[courseId].certified;
-    }
-
-    function getDefaultAdmin() public view returns (address) {
-        return s_defaultAdmin;
     }
     /**
      * Setters

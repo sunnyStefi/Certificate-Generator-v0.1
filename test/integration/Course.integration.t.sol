@@ -2,19 +2,21 @@
 pragma solidity ^0.8.18;
 
 import {Test, console} from "forge-std/Test.sol";
-// import {Courses} from "../../src/Courses.sol";
 import {Course} from "../../src/Course.sol";
+import {CourseV2} from "../../src/CourseV2.sol";
 import {Deployment} from "../../script/Deployment.s.sol";
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {CreateCourses} from "../../script/Interaction.s.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Deployment, Upgrade} from "../../script/Deployment.s.sol";
 
 contract CourseTest is Test {
-    Deployment deployer;
+    ERC1967Proxy proxy;
     Course public courseFactory;
     uint256 VALUE_001 = 0.01 ether;
     uint256 BASE_BALANCE = 1 ether;
     uint256 MAX_UINT = type(uint256).max;
-    address public ALICE = makeAddr("alice"); // DEPLOYER
+    address public ALICE = vm.envAddress("ADDRESS_ALICE"); // DEPLOYER
     address public BOB = makeAddr("bob"); //STUDENT 1
     address public CARL = makeAddr("carl"); //STUDENT  2
     address public DAVID = makeAddr("david"); //STUDENT 3
@@ -24,13 +26,16 @@ contract CourseTest is Test {
     bytes32 public constant EVALUATOR = keccak256("EVALUATOR");
 
     function setUp() public {
-        deployer = new Deployment();
-        courseFactory = Course(payable(deployer.run()));
+        vm.startPrank(ALICE);
+        courseFactory = new Course();
+        bytes memory initializerData = abi.encodeWithSelector(Course.initialize.selector, ALICE, ALICE);
+        proxy = new ERC1967Proxy(address(courseFactory), initializerData);
         vm.deal(ALICE, BASE_BALANCE); //ADMIN
         vm.deal(BOB, BASE_BALANCE); //STUDENT PASSED 1
         vm.deal(CARL, BASE_BALANCE); //STUDENT PASSED 2
         vm.deal(DAVID, BASE_BALANCE); //STUDENT FAILED 1
         vm.deal(EVE, BASE_BALANCE); //EVALUATOR
+        vm.stopPrank();
     }
 
     function test_multiplePlacesCreationAdd() public {
@@ -91,6 +96,18 @@ contract CourseTest is Test {
         }
         vm.stopPrank();
     }
+
+    function test_courseUpgrade() public {
+        vm.startPrank(ALICE);
+        assertEq(Course(payable(proxy)).getVersion(), 1);
+        bytes memory initializerDataV2 =
+            abi.encodeWithSelector(CourseV2.initializeV2.selector, address(ALICE), address(ALICE));
+        CourseV2 courseV2 = new CourseV2();
+        Course(payable(proxy)).upgradeToAndCall(address(courseV2), initializerDataV2);
+        assertEq(CourseV2(payable(proxy)).getVersion(), 2);
+        vm.stopPrank();
+    }
+
 
     /**
      * Utils
