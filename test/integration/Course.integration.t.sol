@@ -16,11 +16,11 @@ contract CourseTest is Test {
     uint256 VALUE_001 = 0.01 ether;
     uint256 BASE_BALANCE = 1 ether;
     uint256 MAX_UINT = type(uint256).max;
-    address public ALICE = vm.envAddress("ADDRESS_ALICE"); // DEPLOYER
-    address public BOB = makeAddr("bob"); //STUDENT 1
-    address public CARL = makeAddr("carl"); //STUDENT  2
-    address public DAVID = makeAddr("david"); //STUDENT 3
-    address public EVE = makeAddr("eve"); // EVALUATOR
+    address public ALICE = vm.envAddress("ADDRESS_ALICE_ANVIL"); // DEPLOYER
+    address public BOB = vm.envAddress("ADDRESS_BOB_ANVIL"); //STUDENT 1
+    address public CARL = vm.envAddress("ADDRESS_CARL_ANVIL"); //STUDENT  2
+    address public DAVID = vm.envAddress("ADDRESS_DAVID_ANVIL"); //STUDENT 3
+    address public EVE = vm.envAddress("ADDRESS_EVE_ANVIL"); // EVALUATOR
 
     bytes32 public constant ADMIN = keccak256("ADMIN");
     bytes32 public constant EVALUATOR = keccak256("EVALUATOR");
@@ -38,27 +38,27 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-    function test_multiplePlacesCreationAdd() public {
+    function test_multiplePlacesCreationAddd() public {
         createCoursesUtils();
         createCoursesUtils();
-        uint256 balanceOfCourse0 = courseFactory.balanceOf(address(ALICE), 0);
+        uint256 balanceOfCourse0 = Course(payable(proxy)).balanceOf(ALICE, 0);
         assert(balanceOfCourse0 == 14);
-        assert(courseFactory.getCreatedPlacesCounter(1) == 2);
-        assert(courseFactory.getCourseCreator(0) == ALICE);
+        assert(Course(payable(proxy)).getCreatedPlacesCounter(1) == 2);
+        assert(Course(payable(proxy)).getCourseCreator(0) == ALICE);
     }
 
     function test_multiplePlacesCreationAddRemoveAdd() public {
         createCoursesUtils();
         removePlacesUtils();
         createCoursesUtils();
-        assert(courseFactory.getCreatedPlacesCounter(0) == 13);
+        assert(Course(payable(proxy)).getCreatedPlacesCounter(0) == 13);
     }
 
     function test_removeMorePlacesForACourse() public {
         createCoursesUtils();
         vm.prank(ALICE);
         vm.expectRevert(abi.encodeWithSelector(Course.Course_TooManyPlacesForThisCourse.selector, 7, 8));
-        courseFactory.removePlaces(ALICE, 0, 8);
+        Course(payable(proxy)).removePlaces(ALICE, 0, 8);
     }
 
     /**
@@ -67,7 +67,7 @@ contract CourseTest is Test {
      *      e.g. evaluate student before it has received the place NFT ec.
      * 2. Call the same function in a correct order multiple times
      * 3. Mixing Actions point 1 and 2
-     * 4. Mixing Users interactions (e.g. same student will purchase differnt courseFactory..)
+     * 4. Mixing Users interactions (e.g. same student will purchase differnt Course(payable(proxy))..)
      */
 
     /**
@@ -80,18 +80,18 @@ contract CourseTest is Test {
         if (boundedId >= MAX_UINT || boundedValue >= MAX_UINT) {
             // first revert expected (input)
             vm.expectRevert(Course.Course_AmountNotValid.selector);
-            courseFactory.createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
+            Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
         } else {
             // second revert expected (overflow internal sum)
             if (
-                (courseFactory.getCreatedPlacesCounter(boundedId) + boundedValue)
-                    > courseFactory.getMaxPlacesPerCourse()
+                (Course(payable(proxy)).getCreatedPlacesCounter(boundedId) + boundedValue)
+                    > Course(payable(proxy)).getMaxPlacesPerCourse()
             ) {
                 vm.expectRevert(abi.encodeWithSelector(Course.Course_MaxPlacesPerCourseReached.selector));
-                courseFactory.createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
+                Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
             } else {
                 // No revert expected
-                courseFactory.createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
+                Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
             }
         }
         vm.stopPrank();
@@ -108,56 +108,55 @@ contract CourseTest is Test {
         vm.stopPrank();
     }
 
-
     /**
      * Utils
      */
     function createCoursesUtils() private {
         vm.startPrank(ALICE);
-        courseFactory.createCourse(0, 7, "0x", "", VALUE_001);
-        courseFactory.createCourse(1, 1, "0x", "", VALUE_001);
+        Course(payable(proxy)).createCourse(0, 7, "0x", "", VALUE_001);
+        Course(payable(proxy)).createCourse(1, 1, "0x", "", VALUE_001);
         vm.stopPrank();
     }
 
     function setUpEvaluatorUtils() private {
         vm.prank(ALICE);
-        courseFactory.setUpEvaluator(EVE, 0);
+        Course(payable(proxy)).setUpEvaluator(EVE, 0);
     }
 
     function buyPlacesUtils() private {
         vm.prank(BOB);
-        courseFactory.buyPlace{value: VALUE_001}(0);
+        Course(payable(proxy)).buyPlace{value: VALUE_001}(0);
         vm.prank(CARL);
-        courseFactory.buyPlace{value: VALUE_001}(0);
+        Course(payable(proxy)).buyPlace{value: VALUE_001}(0);
         vm.prank(DAVID);
-        courseFactory.buyPlace{value: VALUE_001}(0);
+        Course(payable(proxy)).buyPlace{value: VALUE_001}(0);
     }
 
     function buyPlaceAndTransferNFTUtils() private {
         vm.prank(BOB);
-        courseFactory.buyPlace{value: VALUE_001}(0);
+        Course(payable(proxy)).buyPlace{value: VALUE_001}(0);
         vm.prank(ALICE);
-        courseFactory.transferPlaceNFT(BOB, 0);
+        Course(payable(proxy)).transferPlaceNFT(BOB, 0);
     }
 
     function transferNFTsUtils() private {
         vm.startPrank(ALICE);
-        courseFactory.transferPlaceNFT(BOB, 0);
-        courseFactory.transferPlaceNFT(CARL, 0);
-        courseFactory.transferPlaceNFT(DAVID, 0);
+        Course(payable(proxy)).transferPlaceNFT(BOB, 0);
+        Course(payable(proxy)).transferPlaceNFT(CARL, 0);
+        Course(payable(proxy)).transferPlaceNFT(DAVID, 0);
         vm.stopPrank();
     }
 
     function evaluateUtils() private {
         vm.startPrank(EVE);
-        courseFactory.evaluate(0, BOB, 6);
-        courseFactory.evaluate(0, CARL, 4);
-        courseFactory.evaluate(0, DAVID, 8);
+        Course(payable(proxy)).evaluate(0, BOB, 6);
+        Course(payable(proxy)).evaluate(0, CARL, 4);
+        Course(payable(proxy)).evaluate(0, DAVID, 8);
         vm.stopPrank();
     }
 
     function removePlacesUtils() private {
         vm.prank(ALICE);
-        courseFactory.removePlaces(ALICE, 0, 1);
+        Course(payable(proxy)).removePlaces(ALICE, 0, 1);
     }
 }

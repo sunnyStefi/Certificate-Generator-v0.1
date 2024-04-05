@@ -18,12 +18,12 @@ contract CourseTest is Test {
     uint256 VALUE_001 = 0.01 ether;
     uint256 BASE_BALANCE = 1 ether;
     uint256 MAX_UINT = type(uint256).max;
-    address public ALICE = makeAddr("alice"); // DEPLOYER
-    address public BOB = makeAddr("bob"); //STUDENT 1
-    address public CARL = makeAddr("carl"); //STUDENT  2
-    address public DAVID = makeAddr("david"); //STUDENT 3
-    address public EVE = makeAddr("eve"); // EVALUATOR
-    address public FRANK = makeAddr("frank"); // JUST A GUY
+    address public ALICE = vm.envAddress("ADDRESS_ALICE_ANVIL"); // DEPLOYER
+    address public BOB = vm.envAddress("ADDRESS_BOB_ANVIL"); //STUDENT 1
+    address public CARL = vm.envAddress("ADDRESS_CARL_ANVIL"); //STUDENT  2
+    address public DAVID = vm.envAddress("ADDRESS_DAVID_ANVIL"); //STUDENT 3
+    address public EVE = vm.envAddress("ADDRESS_EVE_ANVIL"); // EVALUATOR
+    address public FRANK = makeAddr("ADDRESS_FRANK_ANVIL"); // JUST A GUY
 
     bytes32 public constant ADMIN = keccak256("ADMIN");
     bytes32 public constant EVALUATOR = keccak256("EVALUATOR");

@@ -24,7 +24,7 @@ contract MockedCourse is Test {
 
     constructor(Course _courseFactory) {
         courseFactory = _courseFactory;
-        admin = makeAddr("ALICE");
+        admin = vm.envAddress("ADDRESS_ALICE_ANVIL");
     }
 
     //evaluate only if there student has NFT
