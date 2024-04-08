@@ -69,8 +69,8 @@ coverage:
 
 push:
 	git add .
-	git commit -m "contract division -part 1"
-	git push origin main
+	git commit -m "contract subdivision init"
+	git push origin feature/updraftSimulation
 
 invariants:
 	forge test --mt invariant  -vv
