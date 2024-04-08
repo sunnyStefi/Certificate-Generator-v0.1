@@ -69,7 +69,7 @@ coverage:
 
 push:
 	git add .
-	git commit -m "proxy upgrade"
+	git commit -m "contract division -part 1"
 	git push origin main
 
 invariants:
