@@ -53,6 +53,7 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     error Course_CannotCertifyTheCourseTwice();
     error Course_CourseNotCreated();
     error Course_EvaluatorCannotBeStudent();
+    error Course_MaxNumberOfCoursesReached();
 
     uint256 public constant BASE_COURSE_FEE = 0.01 ether;
     uint256 public constant MAX_UINT = type(uint256).max;
@@ -65,13 +66,16 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     uint256 private s_placesAllCounter;
     uint256 private s_placesPurchasedCounter;
     uint256 private s_certificatesCounter;
+    uint256 private s_lessonsCounter;
     uint256 private MAX_EVALUATORS;
     uint256 private MAX_PLACES_PER_COURSE;
+    uint256 public COURSES_NUMBER;
 
     address private s_defaultAdmin;
 
     mapping(uint256 => CourseStruct) private s_courses;
     mapping(address => uint256[]) private s_userToCourses;
+    mapping(address => uint256) private s_userToCourseCompletion; //1..100%
     mapping(uint256 => EvaluatedStudent[]) private s_courseToEvaluatedStudents;
 
     uint256[49] __gap;
@@ -83,9 +87,10 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
         uint256 placesPurchased;
         uint256 passedStudents;
         address creator;
-        string uri;
         EnumerableSet.AddressSet evaluators;
         EnumerableSet.AddressSet enrolledStudents;
+        string uri;
+        string[] lessonsUris;
     }
 
     struct EvaluatedStudent {
@@ -147,6 +152,7 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
 
         MAX_EVALUATORS = 5;
         MAX_PLACES_PER_COURSE = 30;
+        COURSES_NUMBER = 10;
         s_defaultAdmin = defaultAdmin;
 
         emit Courses_DefaultRolesAssigned(defaultAdmin, upgrader);
@@ -155,19 +161,25 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     /**
      * 1 Courses
      */
-    function createCourse(uint256 id, uint256 value, bytes memory data, string memory uri, uint256 fee)
-        public
-        onlyRole(ADMIN)
-        validateAmount(id)
-        validateAmount(value)
-        returns (uint256)
-    {
-        setCoursePlacesData(id, value, uri, fee);
+    function createCourse(
+        uint256 id,
+        uint256 value,
+        bytes memory data,
+        string memory uri,
+        uint256 fee,
+        string[] memory lessonsUris
+    ) public onlyRole(ADMIN) validateAmount(id) validateAmount(value) returns (uint256) {
+        if (s_coursesTypeCounter.length() > COURSES_NUMBER) {
+            revert Course_MaxNumberOfCoursesReached();
+        }
+        setCoursePlacesData(id, value, uri, fee, lessonsUris);
         _mint(_msgSender(), id, value, data);
         setApprovalForAll(_msgSender(), true);
         emit Courses_CourseCreated();
         return id;
     }
+
+    //update lesson method
 
     function removePlaces(address from, uint256 id, uint256 value) public onlyRole(ADMIN) validateAmount(value) {
         removePlaceData(id, value);
@@ -278,6 +290,7 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
             s_courses[courseId].passedStudents += 1;
         }
         s_courseToEvaluatedStudents[courseId].push(EvaluatedStudent(mark, block.timestamp, student, _msgSender()));
+       
         emit Courses_EvaluationCompleted(courseId, student, mark);
     }
 
@@ -326,10 +339,13 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
     /**
      * Storage Utils
      */
-    function setCoursePlacesData(uint256 courseId, uint256 value, string memory uri, uint256 fee)
-        private
-        onlyRole(ADMIN)
-    {
+    function setCoursePlacesData(
+        uint256 courseId,
+        uint256 value,
+        string memory uri,
+        uint256 fee,
+        string[] memory lessonsUris
+    ) private onlyRole(ADMIN) {
         if (value == 0) {
             revert Course_AmountNotValid();
         }
@@ -342,6 +358,7 @@ contract Course is Initializable, ERC1155Upgradeable, AccessControlUpgradeable, 
         s_courses[courseId].uri = uri;
         s_coursesTypeCounter.add(courseId);
         s_placesAllCounter += value;
+        s_lessonsCounter += lessonsUris.length; //todo check that does not have repetitions
     }
 
     function removePlaceData(uint256 courseId, uint256 value) public onlyRole(ADMIN) {

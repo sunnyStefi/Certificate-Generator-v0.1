@@ -21,6 +21,7 @@ contract MockedCourse is Test {
     EnumerableSet.AddressSet private evaluators;
     EnumerableSet.AddressSet private students;
     EnumerableSet.AddressSet private promotedStudents;
+    string[] emptyArray;
 
     constructor(Course _courseFactory) {
         courseFactory = _courseFactory;
@@ -59,7 +60,7 @@ contract MockedCourse is Test {
         uint256 boundedAvailablePlaces = boundedValue % availablePlaces; //returns a number between 0 and availablePlaces
         if (boundedAvailablePlaces > 0) {
             vm.prank(admin);
-            courseFactory.createCourse(boundedId, boundedAvailablePlaces, data, uri, 1 ether);
+            courseFactory.createCourse(boundedId, boundedAvailablePlaces, data, uri, 1 ether, emptyArray);
             s_ghost_variable_createCourses++;
             coursesCreated.add(id);
         }

@@ -13,6 +13,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 contract CourseTest is Test {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    string[] emptyArray;
     Deployment deployer;
     Course public courseFactory;
     uint256 VALUE_001 = 0.01 ether;
@@ -49,15 +50,15 @@ contract CourseTest is Test {
     function test_createCourses_FailsTooManyPlaces1() public {
         vm.startPrank(ALICE);
         vm.expectRevert(Course.Course_MaxPlacesPerCourseReached.selector);
-        courseFactory.createCourse(0, 31, "0x", "", VALUE_001);
+        courseFactory.createCourse(0, 31, "0x", "", VALUE_001, emptyArray);
         vm.stopPrank();
     }
 
     function test_createCourses_FailsTooManyPlaces2() public {
         vm.startPrank(ALICE);
-        courseFactory.createCourse(0, 30, "0x", "", VALUE_001);
+        courseFactory.createCourse(0, 30, "0x", "", VALUE_001, emptyArray);
         vm.expectRevert(Course.Course_MaxPlacesPerCourseReached.selector);
-        courseFactory.createCourse(0, 2, "0x", "", VALUE_001);
+        courseFactory.createCourse(0, 2, "0x", "", VALUE_001, emptyArray);
         vm.stopPrank();
     }
 
@@ -318,8 +319,8 @@ contract CourseTest is Test {
 
     function createCoursesUtils() private {
         vm.startPrank(ALICE);
-        courseFactory.createCourse(0, 7, "0x", "", VALUE_001);
-        courseFactory.createCourse(1, 1, "0x", "", VALUE_001);
+        courseFactory.createCourse(0, 7, "0x", "", VALUE_001, emptyArray);
+        courseFactory.createCourse(1, 1, "0x", "", VALUE_001, emptyArray);
         vm.stopPrank();
     }
 

@@ -11,6 +11,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {Deployment, Upgrade} from "../../script/Deployment.s.sol";
 
 contract CourseTest is Test {
+    string[] emptyArray;
     ERC1967Proxy proxy;
     Course public courseFactory;
     uint256 VALUE_001 = 0.01 ether;
@@ -80,7 +81,7 @@ contract CourseTest is Test {
         if (boundedId >= MAX_UINT || boundedValue >= MAX_UINT) {
             // first revert expected (input)
             vm.expectRevert(Course.Course_AmountNotValid.selector);
-            Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
+            Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001, emptyArray);
         } else {
             // second revert expected (overflow internal sum)
             if (
@@ -88,10 +89,10 @@ contract CourseTest is Test {
                     > Course(payable(proxy)).getMaxPlacesPerCourse()
             ) {
                 vm.expectRevert(abi.encodeWithSelector(Course.Course_MaxPlacesPerCourseReached.selector));
-                Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
+                Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001, emptyArray);
             } else {
                 // No revert expected
-                Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001);
+                Course(payable(proxy)).createCourse(boundedId, boundedValue, "0x", "", VALUE_001, emptyArray);
             }
         }
         vm.stopPrank();
@@ -113,8 +114,8 @@ contract CourseTest is Test {
      */
     function createCoursesUtils() private {
         vm.startPrank(ALICE);
-        Course(payable(proxy)).createCourse(0, 7, "0x", "", VALUE_001);
-        Course(payable(proxy)).createCourse(1, 1, "0x", "", VALUE_001);
+        Course(payable(proxy)).createCourse(0, 7, "0x", "", VALUE_001, emptyArray);
+        Course(payable(proxy)).createCourse(1, 1, "0x", "", VALUE_001, emptyArray);
         vm.stopPrank();
     }
 

@@ -15,6 +15,7 @@ contract CreateCourses is Script {
     uint256[] values = new uint256[](2);
     string[] testUri = new string[](2);
     uint256[] fees = new uint256[](2);
+    string[] emptyArray;
 
     function run() external {
         (, aliceKey) = makeAddrAndKey("alice");
@@ -24,10 +25,10 @@ contract CreateCourses is Script {
         }
         vm.startBroadcast(deployerKey);
         Course(mostRecentlyDeployed).createCourse(
-            0, 7, "", "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/0.json", VALUE_001
+            0, 7, "", "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/0.json", VALUE_001, emptyArray
         );
         Course(mostRecentlyDeployed).createCourse(
-            1, 1, "", "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/1.json", VALUE_001
+            1, 1, "", "https://ipfs.io/ipfs/QmZeczzyz6ow8vNJrP7jBnZPdF7CQYrcUjqQZrgXC6hXMF/1.json", VALUE_001, emptyArray
         );
         vm.stopBroadcast();
     }
