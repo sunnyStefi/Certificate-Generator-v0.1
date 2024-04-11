@@ -69,7 +69,7 @@ coverage:
 
 push:
 	git add .
-	git commit -m "contract subdivision init"
+	git commit -m "clean up"
 	git push origin feature/updraftSimulation
 
 invariants:

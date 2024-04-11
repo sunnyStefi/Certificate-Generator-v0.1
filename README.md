@@ -1,6 +1,6 @@
-## Course Certificate Generator - Dynamic NFT - ERC1155
+## Certificate Generator v0.1 - Dynamic NFT - ERC1155
 
-Fullstack application that simulates a real world certificate-issuer institution.
+Application that simulates a real world certificate-issuer institution.
 
 **Process and Schemas**
 
@@ -19,11 +19,6 @@ After that moment, the admin will either:
 ## Recommendations
 
 Use multi-sig wallet such as [Safe](https://app.safe.global/)
-Monitor with its own [Forta bot]()
-
-## Security Threat Model
-
-[Rekt-test](https://blog.trailofbits.com/2023/08/14/can-you-pass-the-rekt-test/) ✅
 
 ## Frameworks
 
